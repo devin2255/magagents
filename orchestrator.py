@@ -14,6 +14,7 @@ from trump_style import TrumpStyleFormatter, TruthSocialAPI
 from doge_auditor import DOGEAuditor
 from firing_mechanism import FiringMechanism, FiringCertificate
 from tariff_negotiator import TariffNegotiator, TradeOffer
+from scheduler import TrumptopiaScheduler
 
 
 class AgentState(Enum):
@@ -46,17 +47,125 @@ class Task:
     approval_rating: float  # 0-100, Trump-style
     loyalty_score: float  # 0-100
     
+    # Extended fields for complete audit trail (from edict)
+    flow_log: List[dict] = None  # State transition history
+    progress_log: List[dict] = None  # Agent progress reports
+    todos: List[dict] = None  # Task breakdown
+    _scheduler: dict = None  # Scheduling metadata
+    _prev_state: Optional[str] = None  # For resume after stop
+    block: str = "无"  # Block reason
+    review_round: int = 0  # Review iteration count
+    output: str = ""  # Final output/deliverable
+    
+    def __post_init__(self):
+        """Initialize default values for mutable fields."""
+        if self.flow_log is None:
+            self.flow_log = []
+        if self.progress_log is None:
+            self.progress_log = []
+        if self.todos is None:
+            self.todos = []
+        if self._scheduler is None:
+            self._scheduler = {
+                "enabled": True,
+                "stallThresholdSec": 180,
+                "maxRetry": 1,
+                "retryCount": 0,
+                "escalationLevel": 0,
+                "stallSince": None,
+                "lastProgressAt": None,
+                "lastDispatchStatus": "none"
+            }
+    
     def to_dict(self) -> dict:
-        return {
-            **asdict(self),
-            "state": self.state.value
+        data = {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "state": self.state.value,
+            "assigned_agent": self.assigned_agent,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "tokens_used": self.tokens_used,
+            "cost": self.cost,
+            "priority": self.priority,
+            "approval_rating": self.approval_rating,
+            "loyalty_score": self.loyalty_score,
+            "flow_log": self.flow_log,
+            "progress_log": self.progress_log,
+            "todos": self.todos,
+            "_scheduler": self._scheduler,
+            "_prev_state": self._prev_state,
+            "block": self.block,
+            "review_round": self.review_round,
+            "output": self.output
         }
+        return data
     
     @classmethod
     def from_dict(cls, data: dict) -> 'Task':
         data = data.copy()
         data["state"] = AgentState(data["state"])
+        # Handle missing fields for backward compatibility
+        data.setdefault("flow_log", [])
+        data.setdefault("progress_log", [])
+        data.setdefault("todos", [])
+        data.setdefault("_scheduler", {
+            "enabled": True,
+            "stallThresholdSec": 180,
+            "maxRetry": 1,
+            "retryCount": 0,
+            "escalationLevel": 0
+        })
+        data.setdefault("block", "无")
+        data.setdefault("review_round", 0)
+        data.setdefault("output", "")
         return cls(**data)
+    
+    def add_flow_log(self, from_entity: str, to_entity: str, remark: str):
+        """Add a state transition log entry."""
+        self.flow_log.append({
+            "at": datetime.now().isoformat(),
+            "from": from_entity,
+            "to": to_entity,
+            "remark": remark
+        })
+    
+    def add_progress_log(self, agent: str, text: str, todos_snapshot: list = None, 
+                         tokens: int = 0, cost: float = 0, elapsed: int = 0):
+        """Add a progress report from an agent."""
+        self.progress_log.append({
+            "at": datetime.now().isoformat(),
+            "agent": agent,
+            "text": text,
+            "state": self.state.value,
+            "todos": todos_snapshot or self.todos,
+            "tokens": tokens,
+            "cost": cost,
+            "elapsed": elapsed
+        })
+        # Update scheduler
+        self._scheduler["lastProgressAt"] = datetime.now().isoformat()
+    
+    def update_todos(self, todos: list):
+        """Update task todos."""
+        self.todos = todos
+    
+    def mark_stall(self):
+        """Mark task as stalled."""
+        if self._scheduler["stallSince"] is None:
+            self._scheduler["stallSince"] = datetime.now().isoformat()
+    
+    def clear_stall(self):
+        """Clear stall status."""
+        self._scheduler["stallSince"] = None
+    
+    def is_stalled(self, threshold_sec: int = 180) -> bool:
+        """Check if task is stalled."""
+        if self._scheduler["stallSince"] is None:
+            return False
+        stall_time = datetime.fromisoformat(self._scheduler["stallSince"])
+        return (datetime.now() - stall_time).total_seconds() > threshold_sec
 
 
 class TrumptopiaOrchestrator:
@@ -101,7 +210,7 @@ class TrumptopiaOrchestrator:
         "justice": AgentState.CABINET,
     }
     
-    def __init__(self, data_dir: Path = None):
+    def __init__(self, data_dir: Path = None, enable_scheduler: bool = False):
         self.data_dir = data_dir or Path(__file__).parent / "data"
         self.data_dir.mkdir(exist_ok=True)
         
@@ -115,6 +224,12 @@ class TrumptopiaOrchestrator:
         self.tasks_file = self.data_dir / "tasks.json"
         self.tasks: Dict[str, Task] = {}
         self.load_tasks()
+        
+        # Scheduler (auto-dispatch and stall detection)
+        self.scheduler: Optional[TrumptopiaScheduler] = None
+        if enable_scheduler:
+            self.scheduler = TrumptopiaScheduler(self)
+            self.scheduler.start()
     
     def load_tasks(self):
         """Load tasks from storage."""

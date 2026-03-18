@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏛️ TRUMPTOPIA AI - Oval Office Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="oval-office-header">
+            <div class="seal">🇺🇸</div>
+            <div class="title">
+                <h1>THE OVAL OFFICE</h1>
+                <p class="subtitle">AI Government Command Center</p>
+            </div>
+            <div class="approval-rating">
+                <span class="rating-label">Approval Rating</span>
+                <span class="rating-value" id="approvalRating">87%</span>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="kanban">📋 Task Board</button>
+            <button class="tab-btn" data-tab="monitor">📊 Monitor</button>
+            <button class="tab-btn" data-tab="congress">🏛️ Congress</button>
+            <button class="tab-btn" data-tab="doge">🐕 DOGE</button>
+            <button class="tab-btn" data-tab="truth">📱 Truth Social</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Kanban Board -->
+            <div id="kanban" class="tab-content active">
+                <div class="kanban-board">
+                    <div class="kanban-column" data-state="pending">
+                        <h3>📥 Pending</h3>
+                        <div class="task-list" id="pendingTasks"></div>
+                    </div>
+                    <div class="kanban-column" data-state="congress">
+                        <h3>🏛️ Congress</h3>
+                        <div class="task-list" id="congressTasks"></div>
+                    </div>
+                    <div class="kanban-column" data-state="potus">
+                        <h3>🎩 POTUS Desk</h3>
+                        <div class="task-list" id="potusTasks"></div>
+                    </div>
+                    <div class="kanban-column" data-state="cabinet">
+                        <h3>💼 Cabinet</h3>
+                        <div class="task-list" id="cabinetTasks"></div>
+                    </div>
+                    <div class="kanban-column" data-state="doing">
+                        <h3>⚡ Executing</h3>
+                        <div class="task-list" id="doingTasks"></div>
+                    </div>
+                    <div class="kanban-column" data-state="done">
+                        <h3>✅ Done</h3>
+                        <div class="task-list" id="doneTasks"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitor Panel -->
+            <div id="monitor" class="tab-content">
+                <div class="monitor-grid">
+                    <div class="stat-card">
+                        <h4>Total Tasks</h4>
+                        <span class="stat-value" id="totalTasks">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Active Tasks</h4>
+                        <span class="stat-value" id="activeTasks">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Completed</h4>
+                        <span class="stat-value" id="completedTasks">0</span>
+                    </div>
+                    <div class="stat-card warning">
+                        <h4>Fired Agents</h4>
+                        <span class="stat-value" id="firedAgents">0</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h4>Task Distribution</h4>
+                    <canvas id="taskChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Congress Panel -->
+            <div id="congress" class="tab-content">
+                <div class="congress-hall">
+                    <div class="senate-section">
+                        <h3>🏛️ Senate (Upper Chamber)</h3>
+                        <div class="vote-display">
+                            <div class="senator" data-name="Cruz">🟥 Cruz<br><small>Conservative</small></div>
+                            <div class="senator" data-name="Sanders">🟦 Sanders<br><small>Progressive</small></div>
+                            <div class="senator swing" data-name="Manchin">⬜ Manchin<br><small>Swing</small></div>
+                        </div>
+                        <div class="bill-queue" id="senateBills"></div>
+                    </div>
+                    <div class="house-section">
+                        <h3>🏛️ House of Representatives</h3>
+                        <div class="bill-queue" id="houseBills"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOGE Panel -->
+            <div id="doge" class="tab-content">
+                <div class="doge-dashboard">
+                    <div class="waste-report">
+                        <h3>🐕 DOGE Daily Waste Report</h3>
+                        <div class="waste-metrics">
+                            <div class="metric">
+                                <span class="label">Waste Found</span>
+                                <span class="value" id="wasteAmount">$0.00</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Agents Fired</span>
+                                <span class="value" id="dogeFired">0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Efficiency Gain</span>
+                                <span class="value" id="efficiencyGain">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="agent-leaderboard">
+                        <h4>📊 Agent Efficiency Leaderboard</h4>
+                        <table id="leaderboardTable">
+                            <thead>
+                                <tr>
+                                    <th>Agent</th>
+                                    <th>Efficiency</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Truth Social Panel -->
+            <div id="truth" class="tab-content">
+                <div class="truth-social-feed">
+                    <div class="feed-header">
+                        <h3>📱 Truth Social Feed</h3>
+                        <span class="live-badge">🔴 LIVE</span>
+                    </div>
+                    <div class="posts-container" id="truthPosts"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Task Detail Modal -->
+        <div id="taskModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle">Task Details</h2>
+                <div id="modalBody"></div>
+                <div class="modal-actions">
+                    <button class="btn-approve">✅ Approve</button>
+                    <button class="btn-veto">❌ Veto</button>
+                    <button class="btn-fire">🔥 Fire Agent</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
