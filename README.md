@@ -291,7 +291,7 @@ Defense: Deal! 5500 tokens
 
 ## 📜 License
 
-MIT License - Make America Great Again!
+MIT License - Make AI Agents Great Again!
 
 ---
 
