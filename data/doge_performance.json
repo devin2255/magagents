@@ -1,0 +1,37 @@
+{
+  "defense": {
+    "agent_id": "defense",
+    "tasks_completed": 6,
+    "tasks_failed": 0,
+    "avg_response_time": 65.0,
+    "total_tokens": 13000,
+    "total_cost": 0.13,
+    "efficiency_score": 100.0,
+    "loyalty_score": 100.0,
+    "last_active": "2026-03-18T10:28:58.201311",
+    "violations": []
+  },
+  "commerce": {
+    "agent_id": "commerce",
+    "tasks_completed": 0,
+    "tasks_failed": 10,
+    "avg_response_time": 400.0,
+    "total_tokens": 80000,
+    "total_cost": 0.7999999999999999,
+    "efficiency_score": 0.0,
+    "loyalty_score": 100.0,
+    "last_active": "2026-03-18T10:28:58.198713",
+    "violations": [
+      "Task failure",
+      "High failure rate: 8/8",
+      "Excessive token usage: 8000",
+      "Slow response: 400.0s",
+      "Task failure",
+      "High failure rate: 9/9",
+      "Excessive token usage: 8000",
+      "Slow response: 400.0s",
+      "Task failure",
+      "High failure rate: 10/10"
+    ]
+  }
+}

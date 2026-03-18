@@ -1,0 +1,7 @@
+# Requirements for TRUMPTOPIA AI
+
+# No external dependencies required for core functionality!
+# Uses only Python standard library
+
+# Optional dependencies for enhanced features
+# pytest>=7.0.0  # For running tests

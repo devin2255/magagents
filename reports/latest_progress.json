@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-03-18T10:27:30.338982",
+  "project": "TRUMPTOPIA AI",
+  "summary": {
+    "total_python_files": 7,
+    "total_md_files": 7,
+    "total_json_files": 0,
+    "lines_of_code": 2177,
+    "test_status": "completed",
+    "tests_passed": 0,
+    "tests_failed": 0
+  },
+  "core_modules": {
+    "trump_style.py": {
+      "exists": true,
+      "lines": 0
+    },
+    "doge_auditor.py": {
+      "exists": true,
+      "lines": 0
+    },
+    "firing_mechanism.py": {
+      "exists": true,
+      "lines": 0
+    },
+    "tariff_negotiator.py": {
+      "exists": true,
+      "lines": 0
+    },
+    "orchestrator.py": {
+      "exists": true,
+      "lines": 0
+    }
+  },
+  "agents_configured": 5,
+  "agent_list": [
+    "scotus",
+    "doge_musk",
+    "congress_senate",
+    "congress_house",
+    "trump_president"
+  ],
+  "project_structure": {
+    "agents": 15,
+    "tests": 1,
+    "docs": 0,
+    "examples": 0
+  },
+  "git_status": {
+    "is_repo": true,
+    "uncommitted_changes": 11,
+    "last_commit": "983d7de Initialize session memory and archive bootstrap"
+  },
+  "progress_percentage": 85
+}
