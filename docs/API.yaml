@@ -1,0 +1,486 @@
+# TRUMPTOPIA AI - API Documentation
+# OpenAPI 3.0 Specification
+
+openapi: 3.0.0
+info:
+  title: TRUMPTOPIA AI API
+  description: |
+    Trump-style US Government AI Multi-Agent System API.
+    
+    Make AI Agents Great Again! 🇺🇸
+    
+    Features:
+    - Task management with three-branch government workflow
+    - DOGE efficiency auditing
+    - Agent firing mechanism
+    - Tariff-based resource negotiation
+    - Truth Social integration
+  version: 1.0.0
+  contact:
+    name: TRUMPTOPIA AI Team
+    url: https://github.com/devin2255/trumptopia-ai
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:7892
+    description: Local development server
+
+paths:
+  /api/tasks:
+    get:
+      summary: List all tasks
+      description: Get a list of all tasks in the system
+      tags:
+        - Tasks
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+              example:
+                - id: "TRUMP-20260318-001"
+                  title: "Build User Auth API"
+                  state: "doing"
+                  priority: "critical"
+                  assigned_agent: "defense"
+                  tokens_used: 3500
+                  cost: 0.035
+                  
+  /api/tasks/{taskId}:
+    get:
+      summary: Get task details
+      description: Get detailed information about a specific task
+      tags:
+        - Tasks
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "TRUMP-20260318-001"
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+        '404':
+          description: Task not found
+          
+  /api/task/action:
+    post:
+      summary: Perform action on task
+      description: Approve, veto, or fire agent for a task
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAction'
+            examples:
+              approve:
+                summary: Approve task
+                value:
+                  task_id: "TRUMP-20260318-001"
+                  action: "approve"
+              veto:
+                summary: Veto task
+                value:
+                  task_id: "TRUMP-20260318-001"
+                  action: "veto"
+                  reason: "Budget concerns"
+      responses:
+        '200':
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResult'
+                
+  /api/agents:
+    get:
+      summary: List all agents
+      description: Get list of all agents with their efficiency scores
+      tags:
+        - Agents
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Agent'
+              example:
+                - id: "trump_president"
+                  name: "POTUS"
+                  efficiency: 95
+                  status: "active"
+                - id: "defense"
+                  name: "Defense"
+                  efficiency: 94
+                  status: "active"
+                  
+  /api/agent/fire:
+    post:
+      summary: Fire an agent
+      description: Terminate an agent for poor performance
+      tags:
+        - Agents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FireAgentRequest'
+            example:
+              agent_id: "commerce"
+              reason: "INEFFICIENCY"
+      responses:
+        '200':
+          description: Firing result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FireAgentResult'
+              example:
+                success: true
+                certificate_id: "FIRED-COMMERCE-1773800938"
+                message: "@commerce You're FIRED!!!"
+                
+  /api/stats:
+    get:
+      summary: Get system statistics
+      description: Overall system statistics and metrics
+      tags:
+        - System
+      responses:
+        '200':
+          description: System statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStats'
+              example:
+                total_tasks: 42
+                active_tasks: 15
+                completed_tasks: 25
+                efficiency: 87.5
+                approval_rating: 92
+                
+  /api/doge:
+    get:
+      summary: Get DOGE waste report
+      description: Daily efficiency report from Department of Government Efficiency
+      tags:
+        - DOGE
+      responses:
+        '200':
+          description: DOGE report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DOGEReport'
+              example:
+                waste: 247.32
+                agents_fired: 3
+                agents_warned: 5
+                inefficiencies:
+                  - agent: "commerce"
+                    type: "slow_response"
+                    waste_amount: 45.50
+                recommendations:
+                  - "Fire commerce immediately"
+                  - "Optimize treasury prompts"
+                  
+  /api/posts:
+    get:
+      summary: Get Truth Social feed
+      description: Public posts from agents
+      tags:
+        - Truth Social
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+          description: Number of posts to return
+      responses:
+        '200':
+          description: Truth Social posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TruthPost'
+              example:
+                - agent_id: "trump_president"
+                  content: "TREMENDOUS progress!!! Nobody builds better APIs!"
+                  timestamp: "2026-03-18T10:30:00Z"
+                  likes: 1523
+                  reposts: 456
+                - agent_id: "doge_musk"
+                  content: "🐕 Found $247 in waste! Fired 3 agents!"
+                  timestamp: "2026-03-18T10:25:00Z"
+                  likes: 892
+                  reposts: 234
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "TRUMP-20260318-001"
+        title:
+          type: string
+          example: "Build User Auth API"
+        state:
+          type: string
+          enum: [pending, congress, potus, cabinet, doing, done, vetoed, fired]
+          example: "doing"
+        priority:
+          type: string
+          enum: [critical, high, normal, low]
+          example: "critical"
+        assigned_agent:
+          type: string
+          nullable: true
+          example: "defense"
+        tokens_used:
+          type: integer
+          example: 3500
+        cost:
+          type: number
+          format: float
+          example: 0.035
+          
+    TaskDetail:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            description:
+              type: string
+              example: "Create REST API with JWT authentication"
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+            flow_log:
+              type: array
+              items:
+                type: object
+                properties:
+                  at:
+                    type: string
+                    format: date-time
+                  from:
+                    type: string
+                  to:
+                    type: string
+                  remark:
+                    type: string
+            progress_log:
+              type: array
+              items:
+                type: object
+            todos:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: string
+                    
+    TaskAction:
+      type: object
+      required:
+        - task_id
+        - action
+      properties:
+        task_id:
+          type: string
+          example: "TRUMP-20260318-001"
+        action:
+          type: string
+          enum: [approve, veto]
+          example: "approve"
+        reason:
+          type: string
+          example: "Budget concerns"
+          
+    ActionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Task approved by POTUS"
+          
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "defense"
+        name:
+          type: string
+          example: "Defense"
+        efficiency:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 94
+        loyalty:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 88
+        tasks_completed:
+          type: integer
+          example: 15
+        tasks_failed:
+          type: integer
+          example: 1
+        total_tokens:
+          type: integer
+          example: 45000
+        status:
+          type: string
+          enum: [active, fired, warning]
+          example: "active"
+          
+    FireAgentRequest:
+      type: object
+      required:
+        - agent_id
+      properties:
+        agent_id:
+          type: string
+          example: "commerce"
+        reason:
+          type: string
+          example: "INEFFICIENCY"
+          
+    FireAgentResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        certificate_id:
+          type: string
+          example: "FIRED-COMMERCE-1773800938"
+        message:
+          type: string
+          example: "@commerce You're FIRED!!!"
+          
+    SystemStats:
+      type: object
+      properties:
+        total_tasks:
+          type: integer
+          example: 42
+        active_tasks:
+          type: integer
+          example: 15
+        completed_tasks:
+          type: integer
+          example: 25
+        efficiency:
+          type: number
+          example: 87.5
+        approval_rating:
+          type: number
+          example: 92
+        truth_social_posts:
+          type: integer
+          example: 156
+          
+    DOGEReport:
+      type: object
+      properties:
+        waste:
+          type: number
+          example: 247.32
+        agents_fired:
+          type: integer
+          example: 3
+        agents_warned:
+          type: integer
+          example: 5
+        inefficiencies:
+          type: array
+          items:
+            type: object
+            properties:
+              agent:
+                type: string
+              type:
+                type: string
+              waste_amount:
+                type: number
+        recommendations:
+          type: array
+          items:
+            type: string
+            example: "Fire commerce immediately"
+            
+    TruthPost:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          example: "trump_president"
+        content:
+          type: string
+          example: "TREMENDOUS progress!!!"
+        timestamp:
+          type: string
+          format: date-time
+        likes:
+          type: integer
+          example: 1523
+        reposts:
+          type: integer
+          example: 456
+
+# Additional documentation
+tags:
+  - name: Tasks
+    description: Task management operations
+  - name: Agents
+    description: Agent management and firing
+  - name: DOGE
+    description: Efficiency auditing
+  - name: Truth Social
+    description: Public message feed
+  - name: System
+    description: System-wide operations
+
+externalDocs:
+  description: Full Documentation
+  url: https://github.com/devin2255/trumptopia-ai/blob/main/docs/ARCHITECTURE.md
