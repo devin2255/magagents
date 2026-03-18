@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  trumptopia:
+    build: .
+    container_name: trumptopia-ai
+    ports:
+      - "7892:7892"
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    environment:
+      - TRUMPTOPIA_SCHEDULER_ENABLED=true
+      - TRUMPTOPIA_LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7892/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Run with scheduler and cron
+  trumptopia-full:
+    build: .
+    container_name: trumptopia-ai-full
+    ports:
+      - "7893:7892"
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+    environment:
+      - TRUMPTOPIA_SCHEDULER_ENABLED=true
+    command: >
+      bash -c "
+        python3 dashboard/server.py --static --port 7892 &
+        python3 -c 'from orchestrator import TrumptopiaOrchestrator; TrumptopiaOrchestrator(enable_scheduler=True)' &
+        wait
+      "
+    profiles:
+      - full

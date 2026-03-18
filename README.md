@@ -78,7 +78,19 @@ Both projects are excellent examples of applying ancient/imperial governance str
 
 ## 🚀 Quick Start
 
-### Installation
+### Option 1: Docker (Recommended)
+
+```bash
+# Clone and run with Docker Compose
+git clone <repository-url>
+cd trumptopia-ai
+docker-compose up -d
+
+# Access dashboard
+open http://localhost:7892
+```
+
+### Option 2: Manual Installation
 
 ```bash
 # Clone the repository
@@ -91,8 +103,12 @@ pip install -r requirements.txt
 # Run tests
 python3 tests/test_trumptopia.py
 
-# Generate progress report
-python3 progress_reporter.py
+# Start dashboard and scheduler
+bash scripts/run_loop.sh
+
+# Or start components separately
+python3 dashboard/server.py --static  # Dashboard only
+python3 -c "from orchestrator import TrumptopiaOrchestrator; TrumptopiaOrchestrator(enable_scheduler=True)"  # Scheduler only
 ```
 
 ### Usage
@@ -134,24 +150,79 @@ if doge_report['agents_fired'] > 0:
     print(f"Fired! Certificate: {cert.certificate_id}")
 ```
 
+## 🖥️ Dashboard
+
+The **Oval Office Dashboard** provides real-time visualization:
+
+```bash
+# Start dashboard
+python3 dashboard/server.py --static
+
+# Open browser
+http://localhost:7892
+```
+
+**Features:**
+- 📋 **Task Board**: Kanban view of all tasks
+- 📊 **Monitor**: Statistics and charts
+- 🏛️ **Congress**: Voting and bill status
+- 🐕 **DOGE**: Efficiency reports
+- 📱 **Truth Social**: Live message feed
+
+## 🛠️ CLI Tools
+
+### Kanban CLI
+
+Manage tasks from command line:
+
+```bash
+# Update task state
+python3 scripts/kanban_update.py state TRUMP-001 doing
+
+# Add progress with todos
+python3 scripts/kanban_update.py progress TRUMP-001 "50% complete" \
+    "Design:completed|Coding:in-progress|Testing:pending"
+
+# Mark task done
+python3 scripts/kanban_update.py done TRUMP-001 \
+    "https://github.com/..." "API implemented"
+
+# List all tasks
+python3 scripts/kanban_update.py list
+
+# Show task details
+python3 scripts/kanban_update.py show TRUMP-001
+```
+
 ## 📊 Project Structure
 
 ```
 trumptopia-ai/
 ├── agents/                    # Agent personalities
-│   ├── trump_president/      # POTUS
-│   ├── doge_musk/            # DOGE
-│   ├── congress_senate/      # Senate
-│   ├── congress_house/       # House
-│   ├── scotus/               # Supreme Court
-│   ├── state_dept/           # State Department
-│   ├── treasury/             # Treasury
-│   ├── defense/              # Defense
-│   ├── commerce/             # Commerce
-│   ├── energy/               # Energy
-│   └── justice/              # Justice
+│   ├── trump_president/SOUL.md
+│   ├── doge_musk/SOUL.md
+│   ├── congress_senate/SOUL.md
+│   ├── congress_house/SOUL.md
+│   ├── scotus/SOUL.md
+│   ├── state_dept/
+│   ├── treasury/
+│   ├── defense/
+│   ├── commerce/
+│   ├── energy/
+│   └── justice/
+├── dashboard/                 # Web UI
+│   ├── dashboard.html
+│   ├── css/dashboard.css
+│   ├── js/dashboard.js
+│   └── server.py
+├── scripts/                   # CLI tools
+│   ├── kanban_update.py      # Task management CLI
+│   ├── run_loop.sh           # Start script
+│   └── file_lock.py          # Concurrency control
+├── docs/                      # Documentation
+│   └── ARCHITECTURE.md       # Detailed architecture
 ├── tests/                     # Test suite
-│   └── test_trumptopia.py    # Comprehensive tests
+│   └── test_trumptopia.py
 ├── data/                      # Runtime data
 ├── reports/                   # Progress reports
 ├── trump_style.py            # Message formatting
@@ -159,9 +230,10 @@ trumptopia-ai/
 ├── firing_mechanism.py       # Termination system
 ├── tariff_negotiator.py      # Resource trading
 ├── orchestrator.py           # Main orchestrator
+├── scheduler.py              # Auto-scheduler
 ├── progress_reporter.py      # Progress tracking
-├── cron_progress.sh          # Cron job script
-├── PROJECT.md                # Project specification
+├── Dockerfile                # Docker image
+├── docker-compose.yml        # Docker Compose
 └── README.md                 # This file
 ```
 
