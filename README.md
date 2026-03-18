@@ -56,6 +56,26 @@ A Trump-style US Government-inspired AI multi-agent system with:
    - Supreme Court reviews
    - DOGE audits all
 
+## 📚 Acknowledgments & References
+
+This project is inspired by and references the following open-source projects:
+
+### [edict](https://github.com/cft0808/edict) by @cft0808
+The "三省六部" (Three Provinces and Six Ministries) multi-agent system. TRUMPTOPIA AI references its architecture design including:
+- State machine-based task flow management
+- Permission matrix for agent communication
+- Automated task dispatch system
+- Progress tracking and audit mechanisms
+
+### [boluobobo-ai-court-tutorial](https://github.com/wanikua/boluobobo-ai-court-tutorial) by @wanikua
+The AI Court / "当皇上" (Becoming Emperor) multi-agent system. TRUMPTOPIA AI is inspired by:
+- Role-based agent personality design (SOUL.md)
+- Hierarchical government structure metaphor
+- Real-time dashboard concepts
+- Multi-channel integration patterns
+
+Both projects are excellent examples of applying ancient/imperial governance structures to AI multi-agent systems. TRUMPTOPIA AI adapts these concepts to the American government system with Trump-style satire.
+
 ## 🚀 Quick Start
 
 ### Installation
