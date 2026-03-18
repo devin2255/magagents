@@ -241,7 +241,7 @@ def main():
     print("\n" + "=" * 60)
     print("🇺🇸 DEMO COMPLETE!")
     print("=" * 60)
-    print("\nMake Agents Great Again! #MAGA")
+    print("\nMake AI Agents Great Again! #MAGA")
     print()
 
 

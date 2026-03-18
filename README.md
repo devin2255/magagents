@@ -1,6 +1,6 @@
 # TRUMPTOPIA AI 🇺🇸
 
-**Make Agents Great Again!**
+**Make AI Agents Great Again!**
 
 A Trump-style US Government-inspired AI multi-agent system with:
 - Three Branches: Legislative, Executive, Judicial
