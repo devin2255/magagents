@@ -93,6 +93,18 @@ class LLMConfig:
     def provider_names(self) -> list:
         return list((self.raw.get("providers") or {}).keys())
 
+    def budget(self) -> dict:
+        """Per-task cost/token caps for the agentic circuit-breaker (env-overridable)."""
+        b = dict(self.raw.get("budget") or {})
+        max_cost = os.environ.get("MAGAGENTS_MAX_COST_PER_TASK")
+        max_tokens = os.environ.get("MAGAGENTS_MAX_TOKENS_PER_TASK")
+        return {
+            "max_cost_per_task": float(max_cost) if max_cost is not None
+            else float(b.get("max_cost_per_task", 0.0) or 0.0),
+            "max_tokens_per_task": int(max_tokens) if max_tokens is not None
+            else int(b.get("max_tokens_per_task", 0) or 0),
+        }
+
 
 def load_config(path: Path = CONFIG_PATH) -> LLMConfig:
     """Load models.yaml (or built-in fallback).

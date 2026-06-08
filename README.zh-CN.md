@@ -283,6 +283,12 @@ print(result["outcome"], result.get("output"))
 离线时自动放行并产出占位结果（完全可测试）；配了 key 就是真正的多智能体决策。
 跑 `python demo.py` 末尾可直接看到实战效果。
 
+- **成本熔断**：任务超预算时 DOGE 会在下一步前直接叫停。可在 `config/models.yaml`
+  的 `budget:` 配置，或按次传参 `run_task_agentic(id, max_cost=0.02)`；
+  环境变量 `MAGAGENTS_MAX_COST_PER_TASK`。
+- **看板联动**：在 Oval Office 看板点开任务即可看到完整决策链 + 交付物，
+  或点 **▶️ Run (Agentic)** 直接在网页上跑整条流程。
+
 > 🔒 API Key 只从环境变量读取，绝不提交（`.env` 已加入 .gitignore）。
 
 ## 🧪 测试

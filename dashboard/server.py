@@ -11,6 +11,13 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
+# Ensure emoji/Unicode output works on all platforms (e.g. Windows GBK consoles)
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -74,6 +81,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             
             if path == '/api/task/action':
                 result = self.handle_task_action(data)
+            elif path == '/api/task/run':
+                result = self.handle_run_agentic(data)
             elif path == '/api/agent/fire':
                 result = self.handle_fire_agent(data)
             else:
@@ -102,9 +111,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 'state': task.state.value,
                 'priority': task.priority,
                 'assigned_agent': task.assigned_agent,
+                'agent': task.assigned_agent,  # alias for the frontend
+                'created': task.created_at,
                 'created_at': task.created_at,
                 'tokens_used': task.tokens_used,
-                'cost': task.cost
+                'cost': task.cost,
+                'outcome': getattr(task, 'outcome', ''),
+                'output': getattr(task, 'output', ''),
+                'decision_trace': getattr(task, 'decision_trace', []) or []
             })
         return tasks
     
@@ -173,6 +187,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
         
         return {'success': success}
     
+    def handle_run_agentic(self, data):
+        """Run a task through the full agentic government flow."""
+        task_id = data.get('task_id')
+        if not task_id or task_id not in self.orchestrator.tasks:
+            return {'success': False, 'error': 'Unknown task'}
+        result = self.orchestrator.run_task_agentic(task_id)
+        return {
+            'success': 'error' not in result,
+            'outcome': result.get('outcome'),
+            'trace': result.get('trace', []),
+            'llm_enabled': self.orchestrator.llm_enabled,
+        }
+
     def handle_fire_agent(self, data):
         """Handle agent firing"""
         agent_id = data.get('agent_id')

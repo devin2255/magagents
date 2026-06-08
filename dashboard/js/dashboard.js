@@ -254,17 +254,78 @@ class MAGAgentsDashboard {
         const task = this.tasks.find(t => t.id === taskId);
         if (!task) return;
 
+        const agent = task.agent || task.assigned_agent || 'Unassigned';
+        const cost = (task.cost != null) ? `$${Number(task.cost).toFixed(5)}` : '$0';
+        const tokens = task.tokens_used || 0;
+
+        // Decision trace (from agentic runs)
+        const trace = task.decision_trace || [];
+        let traceHtml = '';
+        if (trace.length) {
+            const icons = { congress: '🏛️', scotus: '⚖️', potus: '🎩', cabinet: '🏢', doge: '🐕' };
+            const rows = trace.map(step => {
+                const verdict = step.vote || step.decision || step.ruling || step.verdict
+                    || (step.output_preview ? 'executed' : '');
+                const detail = step.reason || step.output_preview || '';
+                const eff = (step.efficiency != null) ? ` · eff ${Number(step.efficiency).toFixed(0)}%` : '';
+                return `<div class="trace-step">
+                    <span class="trace-stage">${icons[step.stage] || '•'} ${(step.stage || '').toUpperCase()}</span>
+                    <span class="trace-agent">@${step.agent || '?'}</span>
+                    <span class="trace-verdict">${verdict}${eff}</span>
+                    <div class="trace-detail">${this.escape(detail)}</div>
+                </div>`;
+            }).join('');
+            traceHtml = `<h4>🧭 Decision Trace</h4><div class="decision-trace">${rows}</div>`;
+        }
+
+        const outcomeBadge = task.outcome
+            ? `<span class="outcome-badge outcome-${task.outcome}">${task.outcome.toUpperCase()}</span>` : '';
+        const outputHtml = task.output
+            ? `<h4>📄 Deliverable</h4><div class="task-output">${this.escape(task.output)}</div>` : '';
+
         document.getElementById('modalTitle').textContent = task.title;
         document.getElementById('modalBody').innerHTML = `
-            <p><strong>ID:</strong> ${task.id}</p>
+            <p><strong>ID:</strong> ${task.id} ${outcomeBadge}</p>
             <p><strong>State:</strong> ${task.state}</p>
             <p><strong>Priority:</strong> ${task.priority}</p>
-            <p><strong>Assigned:</strong> ${task.agent || 'Unassigned'}</p>
-            <p><strong>Created:</strong> ${new Date(task.created).toLocaleString()}</p>
+            <p><strong>Assigned:</strong> ${agent}</p>
+            <p><strong>Cost:</strong> ${cost} &nbsp; <strong>Tokens:</strong> ${tokens}</p>
+            <p><strong>Created:</strong> ${task.created ? new Date(task.created).toLocaleString() : '—'}</p>
+            <button class="btn-run" id="runAgenticBtn">▶️ Run (Agentic)</button>
+            ${traceHtml}
+            ${outputHtml}
         `;
+
+        const runBtn = document.getElementById('runAgenticBtn');
+        if (runBtn) runBtn.addEventListener('click', () => this.runAgentic(task.id));
 
         document.getElementById('taskModal').classList.add('active');
         this.currentTask = task;
+    }
+
+    escape(s) {
+        return String(s || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    }
+
+    async runAgentic(taskId) {
+        const btn = document.getElementById('runAgenticBtn');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Running government flow...'; }
+        try {
+            const res = await fetch('/api/task/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_id: taskId })
+            });
+            const result = await res.json();
+            await this.loadData();
+            this.showTaskDetail(taskId);  // re-render with fresh trace
+            if (!result.llm_enabled) {
+                this.addPost('doge_musk', '🤖 Ran in OFFLINE mode (no API key) — decisions auto-approved.', '🐕');
+            }
+        } catch (e) {
+            if (btn) { btn.disabled = false; btn.textContent = '▶️ Run (Agentic)'; }
+            console.error('runAgentic failed', e);
+        }
     }
 
     approveTask() {

@@ -535,3 +535,54 @@ th {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== Agentic decision trace (P3 dashboard integration) ===== */
+.btn-run {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 8px 0 12px;
+}
+.btn-run:hover { filter: brightness(1.1); }
+.btn-run:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.decision-trace {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 6px 0 14px;
+}
+.trace-step {
+    border-left: 3px solid #D4AF37;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 8px 10px;
+    border-radius: 0 6px 6px 0;
+}
+.trace-stage { font-weight: 700; margin-right: 8px; }
+.trace-agent { color: #D4AF37; margin-right: 8px; }
+.trace-verdict { font-style: italic; opacity: 0.9; }
+.trace-detail { font-size: 0.85em; opacity: 0.75; margin-top: 4px; }
+
+.task-output {
+    white-space: pre-wrap;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 10px;
+    border-radius: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    font-size: 0.9em;
+}
+
+.outcome-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75em;
+    font-weight: 700;
+}
+.outcome-done { background: #16a34a; color: #fff; }
+.outcome-fired, .outcome-vetoed { background: #dc2626; color: #fff; }
+.outcome-blocked, .outcome-over_budget { background: #d97706; color: #fff; }

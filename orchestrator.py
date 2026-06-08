@@ -67,7 +67,9 @@ class Task:
     block: str = "无"  # Block reason
     review_round: int = 0  # Review iteration count
     output: str = ""  # Final output/deliverable
-    
+    decision_trace: List[dict] = None  # Agentic decision steps (P3)
+    outcome: str = ""  # Final agentic outcome: done/vetoed/fired/blocked/over_budget
+
     def __post_init__(self):
         """Initialize default values for mutable fields."""
         if self.flow_log is None:
@@ -76,6 +78,8 @@ class Task:
             self.progress_log = []
         if self.todos is None:
             self.todos = []
+        if self.decision_trace is None:
+            self.decision_trace = []
         if self._scheduler is None:
             self._scheduler = {
                 "enabled": True,
@@ -109,7 +113,9 @@ class Task:
             "_prev_state": self._prev_state,
             "block": self.block,
             "review_round": self.review_round,
-            "output": self.output
+            "output": self.output,
+            "decision_trace": self.decision_trace,
+            "outcome": self.outcome
         }
         return data
     
@@ -131,6 +137,8 @@ class Task:
         data.setdefault("block", "无")
         data.setdefault("review_round", 0)
         data.setdefault("output", "")
+        data.setdefault("decision_trace", [])
+        data.setdefault("outcome", "")
         return cls(**data)
     
     def add_flow_log(self, from_entity: str, to_entity: str, remark: str):
@@ -235,11 +243,14 @@ class MAGAgentsOrchestrator:
         # template/simulation mode when no API keys are configured.
         self.llm = None
         self.llm_usage = {"input_tokens": 0, "output_tokens": 0, "cost": 0.0}
+        self.budget = {"max_cost_per_task": 0.0, "max_tokens_per_task": 0}
         if _LLM_IMPORT_OK:
             try:
                 from llm.config import load_dotenv_if_present
                 load_dotenv_if_present()  # pick up project .env at app startup
-                self.llm = LLMClient(load_config())
+                cfg = load_config()
+                self.llm = LLMClient(cfg)
+                self.budget = cfg.budget()
             except Exception:
                 self.llm = None
 
@@ -340,16 +351,48 @@ class MAGAgentsOrchestrator:
                             time.time() - start, success=bool(text))
         return text or fallback
 
-    def run_task_agentic(self, task_id: str) -> dict:
+    def _over_budget(self, task: Task, max_cost: float, max_tokens: int) -> Optional[str]:
+        """Return a reason string if the task has exceeded its budget, else None."""
+        if max_cost and task.cost >= max_cost:
+            return f"cost ${task.cost:.4f} >= cap ${max_cost:.4f}"
+        if max_tokens and task.tokens_used >= max_tokens:
+            return f"tokens {task.tokens_used} >= cap {max_tokens}"
+        return None
+
+    def _halt_over_budget(self, task: Task, trace: list, reason: str) -> dict:
+        """DOGE pulls the plug on a task that blew its budget."""
+        task.block = f"Over budget: {reason}"
+        task.outcome = "over_budget"
+        task.decision_trace = trace
+        self.save_tasks()
+        msg = self._speak(
+            "doge_musk",
+            intent=f"You are HALTING task '{task.title}' to stop overspending. "
+                   f"Budget breach: {reason}.",
+            fallback=f"🐕 DOGE HALT! Task '{task.title}' stopped — {reason}. SAVING MONEY!!!",
+        )
+        self.truth_social.post("doge_musk", msg, trump_style=False)
+        return {"task_id": task.id, "outcome": "over_budget", "reason": reason, "trace": trace}
+
+    def run_task_agentic(self, task_id: str, max_cost: float = None,
+                         max_tokens: int = None) -> dict:
         """Drive a task through the full government with REAL agent decisions.
 
         Congress votes -> POTUS approves/vetoes & assigns -> Cabinet executes
         -> DOGE audits (real tokens) -> Done / Fired. Works offline too (agents
         auto-approve and emit placeholders), so it is fully testable without keys.
+
+        A cost circuit-breaker (max_cost / max_tokens, defaulting to config budget)
+        lets DOGE halt the task before the next LLM step if it overspends.
         """
         task = self.tasks.get(task_id)
         if not task:
             return {"error": "Task not found"}
+
+        if max_cost is None:
+            max_cost = self.budget.get("max_cost_per_task", 0.0)
+        if max_tokens is None:
+            max_tokens = self.budget.get("max_tokens_per_task", 0)
 
         ctx = f"Task: {task.title}\nDescription: {task.description}\nPriority: {task.priority}"
         trace = []
@@ -377,11 +420,18 @@ class MAGAgentsOrchestrator:
             trace.append({"stage": "scotus", "agent": "scotus", **ruling})
             if str(ruling.get("ruling")).lower() == "block":
                 task.block = ruling.get("reason", "Blocked by SCOTUS")
+                task.outcome = "blocked"
+                task.decision_trace = trace
                 self.save_tasks()
                 return {"task_id": task_id, "outcome": "blocked", "trace": trace}
             self.transition_state(task_id, AgentState.POTUS, "SCOTUS allowed to proceed")
         else:
             self.transition_state(task_id, AgentState.POTUS, vote.get("reason", ""))
+
+        # Budget circuit-breaker before the next (potentially costly) step.
+        over = self._over_budget(task, max_cost, max_tokens)
+        if over:
+            return self._halt_over_budget(task, trace, over)
 
         # 2) Presidential decision -------------------------------------------
         cabinet = [a for a, s in self.AGENT_STATES.items() if s == AgentState.CABINET]
@@ -399,11 +449,18 @@ class MAGAgentsOrchestrator:
 
         if str(potus.get("decision")).lower() == "veto":
             self.veto_task(task_id, potus.get("reason", "Vetoed by POTUS"))
+            task.outcome = "vetoed"
+            task.decision_trace = trace
+            self.save_tasks()
             return {"task_id": task_id, "outcome": "vetoed", "trace": trace}
 
         assignee = potus.get("assignee") if potus.get("assignee") in cabinet else "commerce"
         self.approve_task(task_id)  # POTUS -> CABINET
         self.assign_to_agent(task_id, assignee)
+
+        over = self._over_budget(task, max_cost, max_tokens)
+        if over:
+            return self._halt_over_budget(task, trace, over)
 
         # 3) Cabinet execution (real work) -----------------------------------
         self.transition_state(task_id, AgentState.DOING, f"Assigned to {assignee}")
@@ -417,6 +474,10 @@ class MAGAgentsOrchestrator:
         task.add_progress_log(assignee, output[:500], tokens=task.tokens_used, cost=task.cost)
         self.save_tasks()
         trace.append({"stage": "cabinet", "agent": assignee, "output_preview": output[:200]})
+
+        over = self._over_budget(task, max_cost, max_tokens)
+        if over:
+            return self._halt_over_budget(task, trace, over)
 
         # 4) DOGE audit on REAL usage ----------------------------------------
         perf = self.doge.agent_history.get(assignee)
@@ -434,10 +495,16 @@ class MAGAgentsOrchestrator:
         if str(audit.get("verdict")).lower() == "fire" or efficiency < 30:
             self.transition_state(task_id, AgentState.DOGE_AUDIT, "DOGE flagged inefficiency")
             self.fire_agent(assignee, audit.get("reason", "INEFFICIENCY"), "doge_musk")
+            task.outcome = "fired"
+            task.decision_trace = trace
+            self.save_tasks()
             return {"task_id": task_id, "outcome": "fired", "assignee": assignee,
                     "efficiency": efficiency, "trace": trace}
 
         self.transition_state(task_id, AgentState.DONE)
+        task.outcome = "done"
+        task.decision_trace = trace
+        self.save_tasks()
         return {"task_id": task_id, "outcome": "done", "assignee": assignee,
                 "efficiency": efficiency, "output": output, "trace": trace}
 

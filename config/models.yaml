@@ -9,6 +9,13 @@
 # Global toggle: auto (use LLM if keys present) | on (require keys) | off (force template mode)
 enabled: auto
 
+# Cost circuit-breaker for run_task_agentic(). DOGE halts a task that blows its
+# budget before the next LLM step. 0 = unlimited. Env overrides:
+#   MAGAGENTS_MAX_COST_PER_TASK / MAGAGENTS_MAX_TOKENS_PER_TASK
+budget:
+  max_cost_per_task: 0.05      # USD
+  max_tokens_per_task: 20000
+
 # Fallback used by any agent without an explicit entry under `agents:`
 default:
   provider: deepseek

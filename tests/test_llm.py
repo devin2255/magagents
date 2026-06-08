@@ -180,6 +180,25 @@ class TestAgenticFlow(unittest.TestCase):
             # FakeProvider reports 11+7 tokens per call -> usage must be > 0
             self.assertGreater(orch.llm_usage["input_tokens"], 0)
             self.assertGreater(len(orch.doge.agent_history), 0)  # DOGE saw real usage
+            # Trace persisted on the task for the dashboard
+            self.assertTrue(orch.get_task(task.id).decision_trace)
+            self.assertTrue(orch.get_task(task.id).outcome)
+        finally:
+            os.environ.pop("DEEPSEEK_API_KEY", None)
+
+    def test_budget_circuit_breaker_halts(self):
+        os.environ["DEEPSEEK_API_KEY"] = "sk-test"
+        try:
+            import importlib, orchestrator, tempfile
+            importlib.reload(orchestrator)
+            orch = orchestrator.MAGAgentsOrchestrator(data_dir=Path(tempfile.mkdtemp()))
+            orch.llm = LLMClient(load_config(), provider_factory=fake_factory)
+            task = orch.create_task("Expensive task", "desc", "high")
+            # Tiny cap -> first recorded usage already exceeds it -> DOGE halts.
+            result = orch.run_task_agentic(task.id, max_cost=1e-12)
+            self.assertEqual(result["outcome"], "over_budget")
+            self.assertEqual(orch.get_task(task.id).outcome, "over_budget")
+            self.assertIn("Over budget", orch.get_task(task.id).block)
         finally:
             os.environ.pop("DEEPSEEK_API_KEY", None)
 

@@ -281,6 +281,12 @@ print(result["outcome"], result.get("output"))
 Offline it auto-approves with placeholder output (fully testable); with keys it
 runs genuine multi-agent decisions. See it live at the end of `python demo.py`.
 
+- **Cost circuit-breaker**: DOGE halts a task before the next step if it blows its
+  budget. Configure in `config/models.yaml` (`budget:`) or per call
+  (`run_task_agentic(id, max_cost=0.02)`); env: `MAGAGENTS_MAX_COST_PER_TASK`.
+- **Dashboard**: open a task in the Oval Office Dashboard to see its full decision
+  trace + deliverable, or hit **▶️ Run (Agentic)** to drive it live.
+
 > 🔒 API keys are read from environment variables only and never committed (`.env` is gitignored).
 
 ## 🧪 Testing
