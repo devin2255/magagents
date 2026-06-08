@@ -1,6 +1,6 @@
-# Contributing to TRUMPTOPIA AI
+# Contributing to MAGAgents
 
-Thank you for your interest in contributing to TRUMPTOPIA AI! Together we can Make AI Agents Great Again! 🇺🇸
+Thank you for your interest in contributing to MAGAgents! Together we can Make AI Agents Great Again! 🇺🇸
 
 ## Table of Contents
 
@@ -74,7 +74,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run tests
-python3 tests/test_trumptopia.py
+python3 tests/test_magagents.py
 
 # Start development server
 bash scripts/run_loop.sh
@@ -137,7 +137,7 @@ Feature requests are welcome! Please:
 
 3. **Test your changes**
    ```bash
-   python3 tests/test_trumptopia.py
+   python3 tests/test_magagents.py
    ```
 
 4. **Commit with clear message**
@@ -161,7 +161,7 @@ Follow PEP 8 with these specifics:
 
 ```python
 # Good
-class TrumptopiaOrchestrator:
+class MAGAgentsOrchestrator:
     """Central orchestrator for the system."""
     
     def create_task(self, title: str, description: str = "") -> Task:
@@ -178,7 +178,7 @@ class TrumptopiaOrchestrator:
         pass
 
 # Bad
-class trumptopiaorchestrator:
+class magagentsorchestrator:
     def createTask(self,title,desc=""):
         # missing docstring, unclear naming
         pass
@@ -264,13 +264,13 @@ Includes Python code samples and expected outputs.
 
 ```bash
 # Run all tests
-python3 tests/test_trumptopia.py
+python3 tests/test_magagents.py
 
 # Run specific test class
-python3 tests/test_trumptopia.py TestTrumpStyleFormatter
+python3 tests/test_magagents.py TestTrumpStyleFormatter
 
 # Run with verbose output
-python3 tests/test_trumptopia.py -v
+python3 tests/test_magagents.py -v
 ```
 
 ### Writing Tests
@@ -281,7 +281,7 @@ Add tests for new features:
 def test_new_feature(self):
     """Test description of what this tests."""
     # Setup
-    orch = TrumptopiaOrchestrator()
+    orch = MAGAgentsOrchestrator()
     
     # Action
     result = orch.new_feature("test")

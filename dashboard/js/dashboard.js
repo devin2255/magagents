@@ -1,7 +1,7 @@
-// TRUMPTOPIA AI Dashboard - Oval Office Command Center
+// MAGAgents Dashboard - Oval Office Command Center
 // Real-time monitoring and control interface
 
-class TrumptopiaDashboard {
+class MAGAgentsDashboard {
     constructor() {
         this.tasks = [];
         this.agents = [];
@@ -331,5 +331,5 @@ class TrumptopiaDashboard {
 
 // Initialize Dashboard
 document.addEventListener('DOMContentLoaded', () => {
-    window.dashboard = new TrumptopiaDashboard();
+    window.dashboard = new MAGAgentsDashboard();
 });

@@ -1,4 +1,4 @@
-# TRUMPTOPIA AI 🇺🇸
+# MAGAgents 🇺🇸
 
 **让 AI 智能体再次伟大！(Make AI Agents Great Again!)**
 
@@ -65,20 +65,20 @@
 本项目受以下开源项目启发并有所参考：
 
 ### [edict](https://github.com/cft0808/edict) by @cft0808
-“三省六部”多智能体系统。TRUMPTOPIA AI 参考了其架构设计，包括：
+“三省六部”多智能体系统。MAGAgents 参考了其架构设计，包括：
 - 基于状态机的任务流转管理
 - 智能体通信的权限矩阵
 - 自动化任务派发系统
 - 进度跟踪与审计机制
 
 ### [boluobobo-ai-court-tutorial](https://github.com/wanikua/boluobobo-ai-court-tutorial) by @wanikua
-AI 法庭 /“当皇上”多智能体系统。TRUMPTOPIA AI 受其启发：
+AI 法庭 /“当皇上”多智能体系统。MAGAgents 受其启发：
 - 基于角色的智能体人格设计（SOUL.md）
 - 层级化的政府结构隐喻
 - 实时看板（Dashboard）理念
 - 多渠道集成模式
 
-这两个项目都是将古代/帝制治理结构应用于 AI 多智能体系统的优秀范例。TRUMPTOPIA AI 将这些理念改造为美国政府体制，并加入川普风格的讽刺。
+这两个项目都是将古代/帝制治理结构应用于 AI 多智能体系统的优秀范例。MAGAgents 将这些理念改造为美国政府体制，并加入川普风格的讽刺。
 
 ## 🚀 快速开始
 
@@ -105,23 +105,23 @@ cd trumptopia-ai
 pip install -r requirements.txt
 
 # 运行测试
-python3 tests/test_trumptopia.py
+python3 tests/test_magagents.py
 
 # 启动看板与调度器
 bash scripts/run_loop.sh
 
 # 或分别启动各组件
 python3 dashboard/server.py --static  # 仅看板
-python3 -c "from orchestrator import TrumptopiaOrchestrator; TrumptopiaOrchestrator(enable_scheduler=True)"  # 仅调度器
+python3 -c "from orchestrator import MAGAgentsOrchestrator; MAGAgentsOrchestrator(enable_scheduler=True)"  # 仅调度器
 ```
 
 ### 使用示例
 
 ```python
-from orchestrator import TrumptopiaOrchestrator, AgentState
+from orchestrator import MAGAgentsOrchestrator, AgentState
 
 # 初始化
-orch = TrumptopiaOrchestrator()
+orch = MAGAgentsOrchestrator()
 
 # 创建任务
 task = orch.create_task(
@@ -227,7 +227,7 @@ trumptopia-ai/
 │   ├── ARCHITECTURE.md        # 详细架构
 │   └── API.yaml               # API 规格
 ├── tests/                     # 测试套件
-│   └── test_trumptopia.py
+│   └── test_magagents.py
 ├── data/                      # 运行时数据
 ├── reports/                   # 进度报告
 ├── trump_style.py             # 消息格式化
@@ -249,10 +249,10 @@ trumptopia-ai/
 
 ```bash
 # 运行所有测试
-python3 tests/test_trumptopia.py
+python3 tests/test_magagents.py
 
 # 详细输出
-python3 tests/test_trumptopia.py -v
+python3 tests/test_magagents.py -v
 ```
 
 测试覆盖：

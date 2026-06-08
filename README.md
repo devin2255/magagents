@@ -1,4 +1,4 @@
-# TRUMPTOPIA AI 🇺🇸
+# MAGAgents 🇺🇸
 
 **Make AI Agents Great Again!**
 
@@ -63,20 +63,20 @@ A Trump-style US Government-inspired AI multi-agent system with:
 This project is inspired by and references the following open-source projects:
 
 ### [edict](https://github.com/cft0808/edict) by @cft0808
-The "三省六部" (Three Provinces and Six Ministries) multi-agent system. TRUMPTOPIA AI references its architecture design including:
+The "三省六部" (Three Provinces and Six Ministries) multi-agent system. MAGAgents references its architecture design including:
 - State machine-based task flow management
 - Permission matrix for agent communication
 - Automated task dispatch system
 - Progress tracking and audit mechanisms
 
 ### [boluobobo-ai-court-tutorial](https://github.com/wanikua/boluobobo-ai-court-tutorial) by @wanikua
-The AI Court / "当皇上" (Becoming Emperor) multi-agent system. TRUMPTOPIA AI is inspired by:
+The AI Court / "当皇上" (Becoming Emperor) multi-agent system. MAGAgents is inspired by:
 - Role-based agent personality design (SOUL.md)
 - Hierarchical government structure metaphor
 - Real-time dashboard concepts
 - Multi-channel integration patterns
 
-Both projects are excellent examples of applying ancient/imperial governance structures to AI multi-agent systems. TRUMPTOPIA AI adapts these concepts to the American government system with Trump-style satire.
+Both projects are excellent examples of applying ancient/imperial governance structures to AI multi-agent systems. MAGAgents adapts these concepts to the American government system with Trump-style satire.
 
 ## 🚀 Quick Start
 
@@ -103,23 +103,23 @@ cd trumptopia-ai
 pip install -r requirements.txt
 
 # Run tests
-python3 tests/test_trumptopia.py
+python3 tests/test_magagents.py
 
 # Start dashboard and scheduler
 bash scripts/run_loop.sh
 
 # Or start components separately
 python3 dashboard/server.py --static  # Dashboard only
-python3 -c "from orchestrator import TrumptopiaOrchestrator; TrumptopiaOrchestrator(enable_scheduler=True)"  # Scheduler only
+python3 -c "from orchestrator import MAGAgentsOrchestrator; MAGAgentsOrchestrator(enable_scheduler=True)"  # Scheduler only
 ```
 
 ### Usage
 
 ```python
-from orchestrator import TrumptopiaOrchestrator
+from orchestrator import MAGAgentsOrchestrator
 
 # Initialize
-orch = TrumptopiaOrchestrator()
+orch = MAGAgentsOrchestrator()
 
 # Create a task
 task = orch.create_task(
@@ -224,7 +224,7 @@ trumptopia-ai/
 ├── docs/                      # Documentation
 │   └── ARCHITECTURE.md       # Detailed architecture
 ├── tests/                     # Test suite
-│   └── test_trumptopia.py
+│   └── test_magagents.py
 ├── data/                      # Runtime data
 ├── reports/                   # Progress reports
 ├── trump_style.py            # Message formatting
@@ -245,10 +245,10 @@ Run the comprehensive test suite:
 
 ```bash
 # Run all tests
-python3 tests/test_trumptopia.py
+python3 tests/test_magagents.py
 
 # Run with verbose output
-python3 tests/test_trumptopia.py -v
+python3 tests/test_magagents.py -v
 ```
 
 Tests cover:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TRUMPTOPIA AI - Kanban Update CLI
+MAGAgents - Kanban Update CLI
 Agent command-line interface for interacting with the dashboard
 Inspired by edict's kanban_update.py
 
@@ -23,14 +23,14 @@ from pathlib import Path
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from orchestrator import TrumptopiaOrchestrator, AgentState
+from orchestrator import MAGAgentsOrchestrator, AgentState
 
 
 class KanbanCLI:
     """CLI for agents to interact with the task board."""
     
     def __init__(self):
-        self.orch = TrumptopiaOrchestrator()
+        self.orch = MAGAgentsOrchestrator()
         self.data_dir = Path(__file__).parent.parent / "data"
     
     def update_state(self, task_id: str, new_state: str, remark: str = ""):
@@ -273,7 +273,7 @@ class KanbanCLI:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='TRUMPTOPIA AI Kanban CLI - Agent task management',
+        description='MAGAgents Kanban CLI - Agent task management',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

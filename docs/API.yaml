@@ -1,9 +1,9 @@
-# TRUMPTOPIA AI - API Documentation
+# MAGAgents - API Documentation
 # OpenAPI 3.0 Specification
 
 openapi: 3.0.0
 info:
-  title: TRUMPTOPIA AI API
+  title: MAGAgents API
   description: |
     Trump-style US Government AI Multi-Agent System API.
     
@@ -17,7 +17,7 @@ info:
     - Truth Social integration
   version: 1.0.0
   contact:
-    name: TRUMPTOPIA AI Team
+    name: MAGAgents Team
     url: https://github.com/devin2255/trumptopia-ai
   license:
     name: MIT

@@ -1,4 +1,4 @@
-# TRUMPTOPIA AI - Configuration
+# MAGAgents - Configuration
 
 ## Project Overview
 A Trump-style US Government-inspired AI multi-agent system with:

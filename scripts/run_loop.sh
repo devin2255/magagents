@@ -1,5 +1,5 @@
 #!/bin/bash
-# TRUMPTOPIA AI - Run Loop
+# MAGAgents - Run Loop
 # Continuous data refresh and scheduler
 
 set -e
@@ -7,7 +7,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
-echo "🏛️  Starting TRUMPTOPIA AI..."
+echo "🏛️  Starting MAGAgents..."
 echo "Make AI Agents Great Again! 🇺🇸"
 echo
 
@@ -17,7 +17,7 @@ mkdir -p data reports logs
 # Function to cleanup on exit
 cleanup() {
     echo ""
-    echo "👋 Shutting down TRUMPTOPIA AI..."
+    echo "👋 Shutting down MAGAgents..."
     pkill -f "python3 dashboard/server.py" 2>/dev/null || true
     exit 0
 }
@@ -32,8 +32,8 @@ DASHBOARD_PID=$!
 # Start scheduler in background
 echo "🕐 Starting Task Scheduler..."
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator(enable_scheduler=True)
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator(enable_scheduler=True)
 import time
 while True:
     time.sleep(60)

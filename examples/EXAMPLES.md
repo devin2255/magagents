@@ -1,4 +1,4 @@
-# TRUMPTOPIA AI - Example Use Cases
+# MAGAgents - Example Use Cases
 # Real-world scenarios demonstrating the system
 
 ## Example 1: Building a New API Endpoint
@@ -11,8 +11,8 @@ The user wants to build a REST API for user authentication.
 ```bash
 # Step 1: Create task (automatically goes to Congress)
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator()
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator()
 task = orch.create_task(
     title='Build User Auth API',
     description='Create REST API with JWT authentication, PostgreSQL, and full test coverage',
@@ -47,8 +47,8 @@ python3 scripts/kanban_update.py state TRUMP-20260318-001 potus \
 
 # POTUS approves via API
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator()
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator()
 orch.approve_task('TRUMP-20260318-001')
 print('✅ Presidential approval granted!')
 "
@@ -78,8 +78,8 @@ python3 scripts/kanban_update.py progress TRUMP-20260318-001 \
 
 # Record token usage
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator()
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator()
 orch.record_task_progress(
     'TRUMP-20260318-001', 
     'defense',
@@ -97,8 +97,8 @@ print('Progress recorded')
 ```bash
 # DOGE runs efficiency audit
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator()
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator()
 report = orch.get_doge_report()
 print(f'DOGE Report: ${report[\"total_waste\"]:.2f} waste found')
 "
@@ -138,8 +138,8 @@ Commerce Department has been underperforming.
 ```bash
 # Check agent efficiency
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator()
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator()
 
 # Simulate poor performance
 for i in range(10):
@@ -173,8 +173,8 @@ if perf:
 ```bash
 # POTUS fires the agent
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator()
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator()
 cert = orch.fire_agent('commerce', 'INEFFICIENCY', fired_by='trump_president')
 print(f'FIRED! Certificate: {cert.certificate_id}')
 print(f'Message: {cert.message}')
@@ -192,7 +192,7 @@ Wasting American taxpayer tokens!!! SAD!!! #MAGA
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║           CERTIFICATE OF TERMINATION                         ║
-║                     🇺🇸 TRUMPTOPIA AI                         ║
+║                     🇺🇸 MAGAgents                         ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Agent: Commerce                                             ║
 ║  Reason: INEFFICIENCY                                        ║
@@ -214,10 +214,10 @@ Wasting American taxpayer tokens!!! SAD!!! #MAGA
 Treasury and Commerce negotiate token resources with tariffs.
 
 ```python
-from orchestrator import TrumptopiaOrchestrator
+from orchestrator import MAGAgentsOrchestrator
 from tariff_negotiator import TariffNegotiator
 
-orch = TrumptopiaOrchestrator()
+orch = MAGAgentsOrchestrator()
 
 # Treasury needs tokens from Defense
 offer = orch.create_trade_offer(
@@ -323,9 +323,9 @@ Senate did a TREMENDOUS job! Law and order restored! #MAGA
 ### Complex Project: Launch New Feature
 
 ```python
-from orchestrator import TrumptopiaOrchestrator
+from orchestrator import MAGAgentsOrchestrator
 
-orch = TrumptopiaOrchestrator(enable_scheduler=True)
+orch = MAGAgentsOrchestrator(enable_scheduler=True)
 
 # Create complex task
 task = orch.create_task(
@@ -361,9 +361,9 @@ print("View real-time progress of all subtasks")
 
 ```bash
 #!/bin/bash
-# Daily TRUMPTOPIA AI workflow
+# Daily MAGAgents workflow
 
-echo "🏛️ TRUMPTOPIA AI - Daily Status"
+echo "🏛️ MAGAgents - Daily Status"
 echo "================================"
 
 # List all active tasks
@@ -374,8 +374,8 @@ python3 scripts/kanban_update.py list
 echo ""
 echo "🐕 DOGE Efficiency Report:"
 python3 -c "
-from orchestrator import TrumptopiaOrchestrator
-orch = TrumptopiaOrchestrator()
+from orchestrator import MAGAgentsOrchestrator
+orch = MAGAgentsOrchestrator()
 report = orch.get_doge_report()
 print(f'Waste: \${report[\"total_waste\"]:.2f}')
 print(f'Fired: {report[\"agents_fired\"]} agents')
@@ -401,16 +401,16 @@ echo "Make AI Agents Great Again! 🇺🇸"
 docker-compose up -d
 
 # Check logs
-docker-compose logs -f trumptopia
+docker-compose logs -f magagents
 
 # Scale (if needed)
-docker-compose up -d --scale trumptopia=3
+docker-compose up -d --scale magagents=3
 
 # Access dashboard
 open http://localhost:7892
 
 # Run CLI in container
-docker-compose exec trumptopia \
+docker-compose exec magagents \
     python3 scripts/kanban_update.py list
 ```
 

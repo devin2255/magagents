@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TRUMPTOPIA AI - Demo Script
+MAGAgents - Demo Script
 Demonstrates all major features
 """
 
@@ -21,7 +21,7 @@ from trump_style import TrumpStyleFormatter
 from doge_auditor import DOGEAuditor
 from firing_mechanism import FiringMechanism
 from tariff_negotiator import TariffNegotiator
-from orchestrator import TrumptopiaOrchestrator, AgentState
+from orchestrator import MAGAgentsOrchestrator, AgentState
 
 
 def print_header(title):
@@ -177,9 +177,9 @@ def demo_tariffs():
 
 def demo_orchestrator():
     """Demo main orchestrator."""
-    print_header("TRUMPTOPIA ORCHESTRATOR")
+    print_header("MAGAgents ORCHESTRATOR")
     
-    orch = TrumptopiaOrchestrator()
+    orch = MAGAgentsOrchestrator()
     
     # Create task
     print("\n📋 CREATING TASK...")
@@ -236,7 +236,7 @@ def demo_orchestrator():
 def main():
     """Run all demos."""
     print("\n" + "🎩" * 30)
-    print("     TRUMPTOPIA AI - FULL DEMO")
+    print("     MAGAgents - FULL DEMO")
     print("🎩" * 30)
     
     demo_trump_style()

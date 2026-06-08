@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TRUMPTOPIA AI - Comprehensive Test Suite
+MAGAgents - Comprehensive Test Suite
 Tests all core functionality
 """
 
@@ -18,7 +18,7 @@ from trump_style import TrumpStyleFormatter, TruthSocialAPI
 from doge_auditor import DOGEAuditor, AgentPerformance
 from firing_mechanism import FiringMechanism, FiringCertificate
 from tariff_negotiator import TariffNegotiator, TradeOffer
-from orchestrator import TrumptopiaOrchestrator, AgentState
+from orchestrator import MAGAgentsOrchestrator, AgentState
 
 
 class TestTrumpStyleFormatter(unittest.TestCase):
@@ -258,7 +258,7 @@ class TestOrchestrator(unittest.TestCase):
         """Set up test fixtures."""
         self.test_dir = Path(__file__).parent / "test_orchestrator_data"
         self.test_dir.mkdir(exist_ok=True)
-        self.orch = TrumptopiaOrchestrator(self.test_dir)
+        self.orch = MAGAgentsOrchestrator(self.test_dir)
     
     def tearDown(self):
         """Clean up test files."""
@@ -352,7 +352,7 @@ class TestIntegration(unittest.TestCase):
         """Set up test fixtures."""
         self.test_dir = Path(__file__).parent / "test_integration_data"
         self.test_dir.mkdir(exist_ok=True)
-        self.orch = TrumptopiaOrchestrator(self.test_dir)
+        self.orch = MAGAgentsOrchestrator(self.test_dir)
     
     def tearDown(self):
         """Clean up test files."""

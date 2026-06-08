@@ -1,9 +1,9 @@
-# TRUMPTOPIA AI - Docker Deployment
+# MAGAgents - Docker Deployment
 # Make AI Agents Great Again! 🇺🇸
 
 FROM python:3.11-slim
 
-LABEL maintainer="TRUMPTOPIA AI"
+LABEL maintainer="MAGAgents"
 LABEL description="Trump-style US Government AI Multi-Agent System"
 
 # Set working directory
@@ -30,8 +30,8 @@ EXPOSE 7892
 
 # Environment variables
 ENV PYTHONPATH=/app
-ENV TRUMPTOPIA_DATA_DIR=/app/data
-ENV TRUMPTOPIA_SCHEDULER_ENABLED=true
+ENV MAGAGENTS_DATA_DIR=/app/data
+ENV MAGAGENTS_SCHEDULER_ENABLED=true
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

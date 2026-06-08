@@ -1,4 +1,4 @@
-# TRUMPTOPIA AI - Core Orchestrator
+# MAGAgents - Core Orchestrator
 # Manages all agents, state transitions, and interactions
 
 import json
@@ -14,11 +14,11 @@ from trump_style import TrumpStyleFormatter, TruthSocialAPI
 from doge_auditor import DOGEAuditor
 from firing_mechanism import FiringMechanism, FiringCertificate
 from tariff_negotiator import TariffNegotiator, TradeOffer
-from scheduler import TrumptopiaScheduler
+from scheduler import MAGAgentsScheduler
 
 
 class AgentState(Enum):
-    """States in the TRUMPTOPIA system."""
+    """States in the MAGAgents system."""
     PENDING = "pending"
     CONGRESS = "congress"      # Legislative review
     POTUS = "potus"            # Presidential review
@@ -33,7 +33,7 @@ class AgentState(Enum):
 
 @dataclass
 class Task:
-    """A task in the TRUMPTOPIA system."""
+    """A task in the MAGAgents system."""
     id: str
     title: str
     description: str
@@ -168,9 +168,9 @@ class Task:
         return (datetime.now() - stall_time).total_seconds() > threshold_sec
 
 
-class TrumptopiaOrchestrator:
+class MAGAgentsOrchestrator:
     """
-    Central orchestrator for the TRUMPTOPIA AI system.
+    Central orchestrator for the MAGAgents system.
     
     Manages:
     - State transitions
@@ -226,9 +226,9 @@ class TrumptopiaOrchestrator:
         self.load_tasks()
         
         # Scheduler (auto-dispatch and stall detection)
-        self.scheduler: Optional[TrumptopiaScheduler] = None
+        self.scheduler: Optional[MAGAgentsScheduler] = None
         if enable_scheduler:
-            self.scheduler = TrumptopiaScheduler(self)
+            self.scheduler = MAGAgentsScheduler(self)
             self.scheduler.start()
     
     def load_tasks(self):
@@ -489,7 +489,7 @@ class TrumptopiaOrchestrator:
 
 # For testing
 if __name__ == "__main__":
-    orchestrator = TrumptopiaOrchestrator()
+    orchestrator = MAGAgentsOrchestrator()
     
     # Create a test task
     task = orchestrator.create_task(

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TRUMPTOPIA AI - Project Progress Reporter
+MAGAgents - Project Progress Reporter
 Generates progress reports every 10 minutes
 """
 
@@ -167,7 +167,7 @@ def generate_progress_report() -> dict:
     
     report = {
         "timestamp": now.isoformat(),
-        "project": "TRUMPTOPIA AI",
+        "project": "MAGAgents",
         "summary": {
             "total_python_files": python_files.get(".py", 0),
             "total_md_files": md_files.get(".md", 0),
@@ -215,7 +215,7 @@ def format_report_text(report: dict) -> str:
     """Format report as readable text."""
     lines = []
     lines.append("=" * 60)
-    lines.append(f"🇺🇸 TRUMPTOPIA AI - PROGRESS REPORT")
+    lines.append(f"🇺🇸 MAGAgents - PROGRESS REPORT")
     lines.append(f"📅 {report['timestamp']}")
     lines.append("=" * 60)
     lines.append("")
@@ -301,7 +301,7 @@ def save_report(report: dict):
 
 def main():
     """Main entry point."""
-    print("🔄 Generating TRUMPTOPIA AI progress report...\n")
+    print("🔄 Generating MAGAgents progress report...\n")
     
     report = generate_progress_report()
     

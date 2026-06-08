@@ -1,4 +1,4 @@
-# TRUMPTOPIA AI - Task Scheduler
+# MAGAgents - Task Scheduler
 # Automatic dispatch, stall detection, and escalation
 # Inspired by edict's scheduler system
 
@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from pathlib import Path
 
-class TrumptopiaScheduler:
+class MAGAgentsScheduler:
     """
-    Automatic task scheduler for TRUMPTOPIA AI.
+    Automatic task scheduler for MAGAgents.
     
     Features:
     - Periodic scan for stalled tasks
@@ -24,7 +24,7 @@ class TrumptopiaScheduler:
         Initialize scheduler.
         
         Args:
-            orchestrator: TrumptopiaOrchestrator instance
+            orchestrator: MAGAgentsOrchestrator instance
             scan_interval: Seconds between scans (default: 60)
         """
         self.orchestrator = orchestrator
@@ -192,10 +192,10 @@ class TrumptopiaScheduler:
 
 # Example usage
 if __name__ == "__main__":
-    from orchestrator import TrumptopiaOrchestrator
+    from orchestrator import MAGAgentsOrchestrator
     
-    orch = TrumptopiaOrchestrator()
-    scheduler = TrumptopiaScheduler(orch)
+    orch = MAGAgentsOrchestrator()
+    scheduler = MAGAgentsScheduler(orch)
     
     # Start scheduler
     scheduler.start()

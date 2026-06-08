@@ -239,7 +239,7 @@ class FiringMechanism:
         return f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║           CERTIFICATE OF TERMINATION                         ║
-║                     🇺🇸 TRUMPTOPIA AI                         ║
+║                     🇺🇸 MAGAgents                         ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                                ║
 ║  Agent: {cert.agent_name:<45} ║

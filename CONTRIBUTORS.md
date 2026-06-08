@@ -1,4 +1,4 @@
-# Contributors to TRUMPTOPIA AI
+# Contributors to MAGAgents
 
 ## 🎩 The Cabinet
 

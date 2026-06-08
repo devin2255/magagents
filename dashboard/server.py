@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TRUMPTOPIA AI Dashboard Server
+MAGAgents Dashboard Server
 Real-time API for Oval Office Dashboard
 Port: 7892
 """
@@ -14,14 +14,14 @@ from pathlib import Path
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from orchestrator import TrumptopiaOrchestrator
+from orchestrator import MAGAgentsOrchestrator
 
 class DashboardHandler(BaseHTTPRequestHandler):
     orchestrator = None
     
     def __init__(self, *args, **kwargs):
         if DashboardHandler.orchestrator is None:
-            DashboardHandler.orchestrator = TrumptopiaOrchestrator()
+            DashboardHandler.orchestrator = MAGAgentsOrchestrator()
         super().__init__(*args, **kwargs)
     
     def log_message(self, format, *args):
@@ -236,7 +236,7 @@ def serve_static(port=7892):
                 SimpleHTTPRequestHandler.do_GET(self)
     
     server = HTTPServer(('0.0.0.0', port), CombinedHandler)
-    print(f"🚀 TRUMPTOPIA AI Dashboard")
+    print(f"🚀 MAGAgents Dashboard")
     print(f"📊 URL: http://localhost:{port}")
     print(f"🏛️  The Oval Office Command Center")
     print()
@@ -250,7 +250,7 @@ def serve_static(port=7892):
 if __name__ == '__main__':
     import argparse
     
-    parser = argparse.ArgumentParser(description='TRUMPTOPIA AI Dashboard Server')
+    parser = argparse.ArgumentParser(description='MAGAgents Dashboard Server')
     parser.add_argument('--port', type=int, default=7892, help='Server port')
     parser.add_argument('--static', action='store_true', help='Serve static files')
     args = parser.parse_args()

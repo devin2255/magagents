@@ -1,5 +1,5 @@
 #!/bin/bash
-# TRUMPTOPIA AI - Progress Report Cron Job
+# MAGAgents - Progress Report Cron Job
 # Run this script every 10 minutes using cron
 
 # Resolve project dir from this script's location (portable across machines)

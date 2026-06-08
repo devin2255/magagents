@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  trumptopia:
+  magagents:
     build: .
     container_name: trumptopia-ai
     ports:
@@ -11,8 +11,8 @@ services:
       - ./reports:/app/reports
       - ./logs:/app/logs
     environment:
-      - TRUMPTOPIA_SCHEDULER_ENABLED=true
-      - TRUMPTOPIA_LOG_LEVEL=INFO
+      - MAGAGENTS_SCHEDULER_ENABLED=true
+      - MAGAGENTS_LOG_LEVEL=INFO
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7892/api/stats"]
@@ -22,7 +22,7 @@ services:
       start_period: 10s
 
   # Optional: Run with scheduler and cron
-  trumptopia-full:
+  magagents-full:
     build: .
     container_name: trumptopia-ai-full
     ports:
@@ -31,11 +31,11 @@ services:
       - ./data:/app/data
       - ./reports:/app/reports
     environment:
-      - TRUMPTOPIA_SCHEDULER_ENABLED=true
+      - MAGAGENTS_SCHEDULER_ENABLED=true
     command: >
       bash -c "
         python3 dashboard/server.py --static --port 7892 &
-        python3 -c 'from orchestrator import TrumptopiaOrchestrator; TrumptopiaOrchestrator(enable_scheduler=True)' &
+        python3 -c 'from orchestrator import MAGAgentsOrchestrator; MAGAgentsOrchestrator(enable_scheduler=True)' &
         wait
       "
     profiles:

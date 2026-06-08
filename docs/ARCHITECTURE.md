@@ -1,4 +1,4 @@
-# TRUMPTOPIA AI - Architecture Documentation
+# MAGAgents - Architecture Documentation
 
 > A Trump-style US Government-inspired AI Multi-Agent System
 
@@ -16,7 +16,7 @@
 
 ## Overview
 
-TRUMPTOPIA AI implements a **Three Branches of Government** model for AI agent coordination, inspired by the US federal government system with Trump-style satire.
+MAGAgents implements a **Three Branches of Government** model for AI agent coordination, inspired by the US federal government system with Trump-style satire.
 
 ### Key Features
 
@@ -39,7 +39,7 @@ TRUMPTOPIA AI implements a **Three Branches of Government** model for AI agent c
 └───────────────────────────┬─────────────────────────────────┘
                             │ HTTP API
 ┌───────────────────────────▼─────────────────────────────────┐
-│              TrumptopiaOrchestrator                          │
+│              MAGAgentsOrchestrator                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
 │  │   Task      │  │   DOGE      │  │   Firing    │         │
 │  │   Manager   │  │  Auditor    │  │  Mechanism  │         │
@@ -79,9 +79,9 @@ Central coordinator managing:
 - Integration between subsystems
 
 ```python
-from orchestrator import TrumptopiaOrchestrator
+from orchestrator import MAGAgentsOrchestrator
 
-orch = TrumptopiaOrchestrator(enable_scheduler=True)
+orch = MAGAgentsOrchestrator(enable_scheduler=True)
 
 # Create task
 task = orch.create_task("Build API", "Create REST endpoint", "high")
@@ -103,7 +103,7 @@ Automatic task management:
 - **Auto-Rollback**: On persistent failure
 
 ```python
-scheduler = TrumptopiaScheduler(orchestrator)
+scheduler = MAGAgentsScheduler(orchestrator)
 scheduler.start()  # Background thread
 ```
 
@@ -272,14 +272,14 @@ bash scripts/run_loop.sh
 
 # Or start separately
 python3 dashboard/server.py --static &
-python3 -c "from orchestrator import TrumptopiaOrchestrator; TrumptopiaOrchestrator(enable_scheduler=True)"
+python3 -c "from orchestrator import MAGAgentsOrchestrator; MAGAgentsOrchestrator(enable_scheduler=True)"
 ```
 
 ### Systemd Service
 
 ```ini
 [Unit]
-Description=TRUMPTOPIA AI
+Description=MAGAgents
 After=network.target
 
 [Service]
