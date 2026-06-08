@@ -60,6 +60,7 @@ class MAGAgentsDashboard {
             this.fetchInto('/api/tasks', d => this.tasks = d),
             this.fetchInto('/api/agents', d => this.agents = d),
             this.fetchInto('/api/posts', d => this.posts = d),
+            this.fetchInto('/api/doge', d => this.doge = d),
         ]);
         await this.fetchInto('/api/stats', d => {
             const el = document.getElementById('llmMode');
@@ -188,12 +189,16 @@ class MAGAgentsDashboard {
 
     renderDOGE() {
         const agents = this.agents.length ? this.agents : [];
-        const fired = agents.filter(a => a.status === 'fired').length;
-        const avgEff = agents.length ? agents.reduce((s, a) => s + (a.efficiency || 0), 0) / agents.length : 0;
-        const waste = agents.reduce((s, a) => s + (100 - (a.efficiency || 0)) * 5, 0);
-        document.getElementById('wasteAmount').textContent = `$${waste.toFixed(2)}`;
+        // Real numbers from /api/doge (computed from actual recorded token usage).
+        const doge = this.doge || {};
+        const fired = (doge.agents_fired != null) ? doge.agents_fired
+            : agents.filter(a => a.status === 'fired').length;
+        const waste = (doge.waste != null) ? doge.waste : 0;
+        const avgEff = (doge.avg_efficiency != null) ? doge.avg_efficiency
+            : (agents.length ? agents.reduce((s, a) => s + (a.efficiency || 0), 0) / agents.length : 0);
+        document.getElementById('wasteAmount').textContent = `$${Number(waste).toFixed(4)}`;
         document.getElementById('dogeFired').textContent = fired;
-        document.getElementById('efficiencyGain').textContent = `${Math.max(0, Math.round(95 - avgEff))}%`;
+        document.getElementById('efficiencyGain').textContent = `${Math.round(avgEff)}%`;
         const tbody = document.querySelector('#leaderboardTable tbody');
         const statusCn = { active: '在岗', warning: '警告', fired: '已解雇' };
         const sorted = [...agents].sort((a, b) => (b.efficiency || 0) - (a.efficiency || 0));

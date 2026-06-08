@@ -153,12 +153,15 @@ class DashboardHandler(BaseHTTPRequestHandler):
         }
     
     def get_doge_report(self):
-        """Get DOGE report"""
-        report = self.orchestrator.doge.generate_daily_report()
+        """Get DOGE report (read-only, real numbers, does not mutate history)"""
+        report = self.orchestrator.doge.compute_report()
+        agents = self.orchestrator.doge.agent_history.values()
+        avg_eff = (sum(p.efficiency_score for p in agents) / len(agents)) if agents else 0.0
         return {
             'waste': report.total_waste,
             'agents_fired': report.agents_fired,
             'agents_warned': report.agents_warned,
+            'avg_efficiency': avg_eff,
             'inefficiencies': report.inefficiencies_found,
             'recommendations': report.savings_recommendations
         }

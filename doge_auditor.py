@@ -217,10 +217,14 @@ class DOGEAuditor:
         # Keep only last 10 violations
         perf.violations = perf.violations[-10:]
     
-    def generate_daily_report(self) -> WasteReport:
-        """Generate daily waste report."""
+    def compute_report(self) -> WasteReport:
+        """Compute the current waste report WITHOUT persisting it.
+
+        Read-only — safe to call repeatedly (e.g. from the dashboard) without
+        polluting waste_history. Numbers come from real recorded agent usage.
+        """
         today = datetime.now().strftime("%Y-%m-%d")
-        
+
         total_waste = 0.0
         agents_fired = 0
         agents_warned = 0
@@ -267,7 +271,7 @@ class DOGEAuditor:
         if total_waste > 100:
             recommendations.append("Implement stricter token limits")
         
-        report = WasteReport(
+        return WasteReport(
             date=today,
             total_waste=total_waste,
             agents_fired=agents_fired,
@@ -275,10 +279,12 @@ class DOGEAuditor:
             inefficiencies_found=inefficiencies,
             savings_recommendations=recommendations
         )
-        
+
+    def generate_daily_report(self) -> WasteReport:
+        """Compute the daily waste report AND persist it to history."""
+        report = self.compute_report()
         self.waste_history.append(report)
         self.save_waste_logs()
-        
         return report
     
     def _calculate_waste(self, perf: AgentPerformance) -> float:
