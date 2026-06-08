@@ -2,6 +2,7 @@
 # Manages all agents, state transitions, and interactions
 
 import json
+import re
 import time
 import asyncio
 from datetime import datetime
@@ -280,6 +281,23 @@ class MAGAgentsOrchestrator:
     def llm_enabled(self) -> bool:
         return bool(self.llm and self.llm.enabled)
 
+    def _lang_directive(self, *texts) -> str:
+        """Directive that forces agents to reply in the user's input language.
+
+        Detects CJK in the task text; otherwise asks the model to mirror the
+        task's language so the whole pipeline (reasons + speech + deliverable)
+        comes back in whatever language the user wrote in.
+        """
+        sample = " ".join(t for t in texts if t)
+        if re.search(r"[一-鿿]", sample):
+            return ("\n\n请务必用【简体中文】回复全部内容，包括所有理由(reason)、"
+                    "发言和最终交付物。")
+        if re.search(r"[぀-ヿ]", sample):       # Japanese kana
+            return "\n\nReply entirely in Japanese, including all reasons and deliverables."
+        if re.search(r"[가-힯]", sample):       # Korean
+            return "\n\nReply entirely in Korean, including all reasons and deliverables."
+        return "\n\nReply in the SAME language as the task text, including reasons and deliverables."
+
     def _speak(self, agent_id: str, intent: str, context: str = "",
                fallback: str = "") -> str:
         """Return an in-character line: LLM-generated when available, else `fallback`.
@@ -289,6 +307,7 @@ class MAGAgentsOrchestrator:
         """
         if not self.llm_enabled or _agent_runtime is None:
             return fallback
+        intent = intent + self._lang_directive(intent, context)
         text, in_tok, out_tok = _agent_runtime.say(self.llm, agent_id, intent, context)
         if in_tok or out_tok:
             self.llm_usage["input_tokens"] += in_tok
@@ -394,7 +413,8 @@ class MAGAgentsOrchestrator:
         if max_tokens is None:
             max_tokens = self.budget.get("max_tokens_per_task", 0)
 
-        ctx = f"Task: {task.title}\nDescription: {task.description}\nPriority: {task.priority}"
+        lang = self._lang_directive(task.title, task.description)
+        ctx = f"Task: {task.title}\nDescription: {task.description}\nPriority: {task.priority}{lang}"
         trace = []
 
         # 1) Congress review --------------------------------------------------

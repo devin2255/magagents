@@ -186,6 +186,25 @@ class TestAgenticFlow(unittest.TestCase):
         finally:
             os.environ.pop("DEEPSEEK_API_KEY", None)
 
+    def test_language_directive_follows_chinese_input(self):
+        os.environ["DEEPSEEK_API_KEY"] = "sk-test"
+        try:
+            import importlib, orchestrator, tempfile
+            importlib.reload(orchestrator)
+            orch = orchestrator.MAGAgentsOrchestrator(data_dir=Path(tempfile.mkdtemp()))
+            orch.llm = LLMClient(load_config(), provider_factory=fake_factory)
+            task = orch.create_task("写一条庆祝贸易协议的推文", "面向美国公众", "high")
+            orch.run_task_agentic(task.id)
+            # The fake provider recorded every prompt; a Chinese task must inject
+            # the Chinese language directive into the agent instructions.
+            provider = orch.llm._cache["deepseek"]
+            all_user_text = " ".join(
+                m["content"] for call in provider.calls for m in call["messages"]
+            )
+            self.assertIn("简体中文", all_user_text)
+        finally:
+            os.environ.pop("DEEPSEEK_API_KEY", None)
+
     def test_budget_circuit_breaker_halts(self):
         os.environ["DEEPSEEK_API_KEY"] = "sk-test"
         try:
