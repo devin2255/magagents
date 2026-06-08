@@ -18,7 +18,7 @@ class TrumpStyleFormatter:
     
     HASHTAGS = ["#MAGA", "#Winning", "#BestAgents", "#DOGE", "#Trump2024"]
     
-    EXCLAMATION_COUNT = (2, 5)
+    EXCLAMATION_COUNT = (3, 5)
     
     @classmethod
     def format(cls, message: str, intensity: float = 0.3) -> str:
@@ -82,7 +82,7 @@ class TrumpStyleFormatter:
         templates = [
             f"🐕 DOGE REPORT: Found ${waste_amount:.2f} in WASTE!!! Fired {agents_fired} inefficient agents!!! SAD!!! #DOGE",
             f"🐕 DOGE: Just saved ${waste_amount:.2f}!!! Fired {agents_fired} swamp creatures!!! DRAINING THE SWAMP!!!",
-            f"🐕 WASTE IDENTIFIED: ${waste_amount:.2f}!!! {agents_fired} agents FIRED!!! Making Government Efficient Again!!!"
+            f"🐕 DOGE WASTE IDENTIFIED: ${waste_amount:.2f}!!! {agents_fired} agents FIRED!!! Making Government Efficient Again!!! #DOGE"
         ]
         return random.choice(templates)
     

@@ -7,6 +7,13 @@ Demonstrates all major features
 import sys
 from pathlib import Path
 
+# Ensure emoji/Unicode output works on all platforms (e.g. Windows GBK consoles)
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent))
 

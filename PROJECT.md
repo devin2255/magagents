@@ -24,7 +24,7 @@ A Trump-style US Government-inspired AI multi-agent system with:
 
 ### Judicial Branch (Courts)
 - scotus: Supreme Court, final arbitration
-- circuit_court: Circuit courts, initial review
+- circuit_court: Circuit courts, initial review *(planned — not yet wired into orchestrator)*
 
 ### Oversight
 - doge_musk: Efficiency audits, waste detection

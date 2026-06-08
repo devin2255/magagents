@@ -2,7 +2,8 @@
 # TRUMPTOPIA AI - Progress Report Cron Job
 # Run this script every 10 minutes using cron
 
-PROJECT_DIR="/home/devin/.openclaw/workspace/trumptopia-ai"
+# Resolve project dir from this script's location (portable across machines)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$PROJECT_DIR/reports/cron.log"
 
 # Create reports directory if not exists

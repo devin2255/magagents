@@ -1,7 +1,7 @@
 # File Lock Utility
 # Prevents concurrent writes to shared data files
 
-import fcntl
+import json
 import os
 import time
 from pathlib import Path
