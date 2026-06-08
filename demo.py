@@ -232,6 +232,20 @@ def demo_orchestrator():
     print(f"   • Truth Social Posts: {summary['truth_social_posts']}")
     print(f"   • Avg Efficiency: {summary['doge_summary']['avg_efficiency']:.1f}%")
 
+    # LLM status & real usage (proof of real-model mode)
+    u = summary.get("llm_usage", {})
+    total_tok = u.get('input_tokens', 0) + u.get('output_tokens', 0)
+    if summary.get("llm_enabled") and total_tok > 0:
+        print(f"   • 🤖 LLM: ON (real models)")
+        print(f"   • Tokens used: {u.get('input_tokens', 0)} in / "
+              f"{u.get('output_tokens', 0)} out")
+        print(f"   • LLM cost: ${u.get('cost', 0):.5f}")
+    elif summary.get("llm_enabled"):
+        print(f"   • 🤖 LLM: ON but 0 tokens — calls fell back to templates "
+              f"(check API key / network)")
+    else:
+        print(f"   • 🤖 LLM: OFF (offline template mode)")
+
 
 def main():
     """Run all demos."""
