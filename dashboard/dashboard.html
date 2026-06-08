@@ -3,138 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏛️ MAGAgents - Oval Office Dashboard</title>
+    <title>MAGAgents · AI 政府指挥中心</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <header class="oval-office-header">
-            <div class="seal">🇺🇸</div>
-            <div class="title">
-                <h1>THE OVAL OFFICE</h1>
-                <p class="subtitle">AI Government Command Center</p>
+        <!-- 顶部 -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="seal">🏛️</div>
+                <div class="title">
+                    <h1>椭圆形办公室</h1>
+                    <p class="subtitle">MAGAgents · AI 政府指挥中心</p>
+                </div>
             </div>
-            <div class="approval-rating">
-                <span class="rating-label">Approval Rating</span>
-                <span class="rating-value" id="approvalRating">87%</span>
+            <div class="header-stats">
+                <div class="hstat">
+                    <span class="hstat-label">支持率</span>
+                    <span class="hstat-value" id="approvalRating">87%</span>
+                </div>
+                <div class="hstat">
+                    <span class="hstat-label">AI 模式</span>
+                    <span class="hstat-value" id="llmMode">—</span>
+                </div>
             </div>
         </header>
 
-        <!-- Navigation Tabs -->
+        <!-- 导航 -->
         <nav class="nav-tabs">
-            <button class="tab-btn active" data-tab="kanban">📋 Task Board</button>
-            <button class="tab-btn" data-tab="monitor">📊 Monitor</button>
-            <button class="tab-btn" data-tab="congress">🏛️ Congress</button>
-            <button class="tab-btn" data-tab="doge">🐕 DOGE</button>
+            <button class="tab-btn active" data-tab="kanban">📋 任务看板</button>
+            <button class="tab-btn" data-tab="monitor">📊 监控</button>
+            <button class="tab-btn" data-tab="congress">🏛️ 国会</button>
+            <button class="tab-btn" data-tab="doge">🐕 DOGE 审计</button>
             <button class="tab-btn" data-tab="truth">📱 Truth Social</button>
         </nav>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Kanban Board -->
+            <!-- 任务看板 -->
             <div id="kanban" class="tab-content active">
+                <div class="create-bar">
+                    <input type="text" id="newTaskTitle" placeholder="给政府派个活，例如：写一条庆祝贸易协议的推文…">
+                    <label class="run-toggle">
+                        <input type="checkbox" id="autoRun" checked> 创建后立即跑流程
+                    </label>
+                    <button class="btn-primary" id="createTaskBtn">＋ 新建任务</button>
+                </div>
                 <div class="kanban-board">
                     <div class="kanban-column" data-state="pending">
-                        <h3>📥 Pending</h3>
+                        <h3>📥 待处理</h3>
                         <div class="task-list" id="pendingTasks"></div>
                     </div>
                     <div class="kanban-column" data-state="congress">
-                        <h3>🏛️ Congress</h3>
+                        <h3>🏛️ 国会审议</h3>
                         <div class="task-list" id="congressTasks"></div>
                     </div>
                     <div class="kanban-column" data-state="potus">
-                        <h3>🎩 POTUS Desk</h3>
+                        <h3>🎩 总统办公桌</h3>
                         <div class="task-list" id="potusTasks"></div>
                     </div>
                     <div class="kanban-column" data-state="cabinet">
-                        <h3>💼 Cabinet</h3>
+                        <h3>💼 内阁</h3>
                         <div class="task-list" id="cabinetTasks"></div>
                     </div>
                     <div class="kanban-column" data-state="doing">
-                        <h3>⚡ Executing</h3>
+                        <h3>⚡ 执行中</h3>
                         <div class="task-list" id="doingTasks"></div>
                     </div>
                     <div class="kanban-column" data-state="done">
-                        <h3>✅ Done</h3>
+                        <h3>✅ 已完成</h3>
                         <div class="task-list" id="doneTasks"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Monitor Panel -->
+            <!-- 监控 -->
             <div id="monitor" class="tab-content">
                 <div class="monitor-grid">
                     <div class="stat-card">
-                        <h4>Total Tasks</h4>
+                        <h4>任务总数</h4>
                         <span class="stat-value" id="totalTasks">0</span>
                     </div>
                     <div class="stat-card">
-                        <h4>Active Tasks</h4>
+                        <h4>进行中</h4>
                         <span class="stat-value" id="activeTasks">0</span>
                     </div>
                     <div class="stat-card">
-                        <h4>Completed</h4>
+                        <h4>已完成</h4>
                         <span class="stat-value" id="completedTasks">0</span>
                     </div>
                     <div class="stat-card warning">
-                        <h4>Fired Agents</h4>
+                        <h4>被解雇的智能体</h4>
                         <span class="stat-value" id="firedAgents">0</span>
                     </div>
                 </div>
                 <div class="chart-container">
-                    <h4>Task Distribution</h4>
+                    <h4>任务状态分布</h4>
                     <canvas id="taskChart"></canvas>
                 </div>
             </div>
 
-            <!-- Congress Panel -->
+            <!-- 国会 -->
             <div id="congress" class="tab-content">
                 <div class="congress-hall">
-                    <div class="senate-section">
-                        <h3>🏛️ Senate (Upper Chamber)</h3>
-                        <div class="vote-display">
-                            <div class="senator" data-name="Cruz">🟥 Cruz<br><small>Conservative</small></div>
-                            <div class="senator" data-name="Sanders">🟦 Sanders<br><small>Progressive</small></div>
-                            <div class="senator swing" data-name="Manchin">⬜ Manchin<br><small>Swing</small></div>
-                        </div>
+                    <div class="panel senate-section">
+                        <h3>🏛️ 参议院（上院）</h3>
                         <div class="bill-queue" id="senateBills"></div>
                     </div>
-                    <div class="house-section">
-                        <h3>🏛️ House of Representatives</h3>
+                    <div class="panel house-section">
+                        <h3>🏛️ 众议院（下院）</h3>
                         <div class="bill-queue" id="houseBills"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- DOGE Panel -->
+            <!-- DOGE -->
             <div id="doge" class="tab-content">
                 <div class="doge-dashboard">
-                    <div class="waste-report">
-                        <h3>🐕 DOGE Daily Waste Report</h3>
+                    <div class="panel waste-report">
+                        <h3>🐕 DOGE 每日浪费报告</h3>
                         <div class="waste-metrics">
                             <div class="metric">
-                                <span class="label">Waste Found</span>
+                                <span class="label">发现浪费</span>
                                 <span class="value" id="wasteAmount">$0.00</span>
                             </div>
                             <div class="metric">
-                                <span class="label">Agents Fired</span>
+                                <span class="label">解雇人数</span>
                                 <span class="value" id="dogeFired">0</span>
                             </div>
                             <div class="metric">
-                                <span class="label">Efficiency Gain</span>
+                                <span class="label">效率提升</span>
                                 <span class="value" id="efficiencyGain">0%</span>
                             </div>
                         </div>
                     </div>
-                    <div class="agent-leaderboard">
-                        <h4>📊 Agent Efficiency Leaderboard</h4>
+                    <div class="panel agent-leaderboard">
+                        <h4>📊 智能体效率排行榜</h4>
                         <table id="leaderboardTable">
                             <thead>
                                 <tr>
-                                    <th>Agent</th>
-                                    <th>Efficiency</th>
-                                    <th>Status</th>
+                                    <th>智能体</th>
+                                    <th>效率</th>
+                                    <th>状态</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -143,31 +153,34 @@
                 </div>
             </div>
 
-            <!-- Truth Social Panel -->
+            <!-- Truth Social -->
             <div id="truth" class="tab-content">
-                <div class="truth-social-feed">
+                <div class="panel truth-social-feed">
                     <div class="feed-header">
-                        <h3>📱 Truth Social Feed</h3>
-                        <span class="live-badge">🔴 LIVE</span>
+                        <h3>📱 Truth Social 实时流</h3>
+                        <span class="live-badge">🔴 直播</span>
                     </div>
                     <div class="posts-container" id="truthPosts"></div>
                 </div>
             </div>
         </main>
 
-        <!-- Task Detail Modal -->
+        <!-- 任务详情弹窗 -->
         <div id="taskModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2 id="modalTitle">Task Details</h2>
+                <h2 id="modalTitle">任务详情</h2>
                 <div id="modalBody"></div>
                 <div class="modal-actions">
-                    <button class="btn-approve">✅ Approve</button>
-                    <button class="btn-veto">❌ Veto</button>
-                    <button class="btn-fire">🔥 Fire Agent</button>
+                    <button class="btn-approve">✅ 批准</button>
+                    <button class="btn-veto">❌ 否决</button>
+                    <button class="btn-fire">🔥 解雇</button>
                 </div>
             </div>
         </div>
+
+        <!-- 轻提示 -->
+        <div id="toast" class="toast"></div>
     </div>
 
     <script src="js/dashboard.js"></script>

@@ -1,5 +1,9 @@
-// MAGAgents Dashboard - Oval Office Command Center
-// Real-time monitoring and control interface
+// MAGAgents 看板 — 椭圆形办公室指挥中心
+
+const PRIORITY_CN = { critical: '紧急', high: '高', normal: '普通', low: '低' };
+const STAGE_CN = { congress: '国会', scotus: '最高法院', potus: '总统', cabinet: '内阁', doge: 'DOGE' };
+const STAGE_ICON = { congress: '🏛️', scotus: '⚖️', potus: '🎩', cabinet: '🏢', doge: '🐕' };
+const OUTCOME_CN = { done: '已完成', fired: '已解雇', vetoed: '已否决', blocked: '已驳回', over_budget: '超预算' };
 
 class MAGAgentsDashboard {
     constructor() {
@@ -7,105 +11,94 @@ class MAGAgentsDashboard {
         this.agents = [];
         this.posts = [];
         this.currentTab = 'kanban';
-        this.refreshInterval = null;
+        this.currentTask = null;
         this.init();
     }
 
     init() {
         this.setupTabs();
         this.setupModal();
+        this.setupCreateBar();
         this.loadData();
         this.startAutoRefresh();
-        this.renderInitialData();
     }
 
-    // Tab Navigation
     setupTabs() {
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
-
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const tabId = btn.dataset.tab;
-                
-                // Update active states
                 tabBtns.forEach(b => b.classList.remove('active'));
                 tabContents.forEach(c => c.classList.remove('active'));
-                
                 btn.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
-                
-                this.currentTab = tabId;
+                document.getElementById(btn.dataset.tab).classList.add('active');
+                this.currentTab = btn.dataset.tab;
                 this.refreshCurrentTab();
             });
         });
     }
 
-    // Modal Setup
     setupModal() {
         const modal = document.getElementById('taskModal');
-        const closeBtn = modal.querySelector('.close');
-        
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
-
-        // Action buttons
+        modal.querySelector('.close').addEventListener('click', () => modal.classList.remove('active'));
+        window.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
         modal.querySelector('.btn-approve').addEventListener('click', () => this.approveTask());
         modal.querySelector('.btn-veto').addEventListener('click', () => this.vetoTask());
         modal.querySelector('.btn-fire').addEventListener('click', () => this.fireAgent());
     }
 
-    // Data Loading
+    setupCreateBar() {
+        const btn = document.getElementById('createTaskBtn');
+        const input = document.getElementById('newTaskTitle');
+        if (btn) btn.addEventListener('click', () => this.createTask());
+        if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') this.createTask(); });
+    }
+
+    // ===== 数据 =====
     async loadData() {
-        try {
-            // Load from local API or mock data
-            const response = await fetch('/api/tasks');
-            if (response.ok) {
-                this.tasks = await response.json();
-            } else {
-                this.loadMockData();
-            }
-        } catch (error) {
-            console.log('Using mock data:', error);
-            this.loadMockData();
-        }
+        await Promise.all([
+            this.fetchInto('/api/tasks', d => this.tasks = d),
+            this.fetchInto('/api/agents', d => this.agents = d),
+            this.fetchInto('/api/posts', d => this.posts = d),
+        ]);
+        await this.fetchInto('/api/stats', d => {
+            const el = document.getElementById('llmMode');
+            if (el) el.textContent = d.llm_enabled ? '真实模型' : '离线模拟';
+        });
+        if (!this.tasks.length && !this.agents.length) this.loadMockData();
         this.renderAll();
+    }
+
+    async fetchInto(url, setter) {
+        try {
+            const r = await fetch(url);
+            if (r.ok) setter(await r.json());
+        } catch (e) { /* offline / static */ }
     }
 
     loadMockData() {
         this.tasks = [
-            { id: 'TRUMP-001', title: 'Build Border Wall API', state: 'pending', priority: 'critical', agent: 'defense', created: new Date().toISOString() },
-            { id: 'TRUMP-002', title: 'DOGE Efficiency Audit', state: 'congress', priority: 'high', agent: 'doge_musk', created: new Date().toISOString() },
-            { id: 'TRUMP-003', title: 'Tax Reform Bill', state: 'potus', priority: 'high', agent: 'treasury', created: new Date().toISOString() },
-            { id: 'TRUMP-004', title: 'Security Review', state: 'cabinet', priority: 'normal', agent: 'defense', created: new Date().toISOString() },
-            { id: 'TRUMP-005', title: 'Trade Deal Negotiation', state: 'doing', priority: 'critical', agent: 'commerce', created: new Date().toISOString() },
-            { id: 'TRUMP-006', title: 'Infrastructure Plan', state: 'done', priority: 'normal', agent: 'energy', created: new Date().toISOString() }
+            { id: 'TRUMP-001', title: '建设边境墙 API', state: 'pending', priority: 'critical', agent: 'defense' },
+            { id: 'TRUMP-002', title: 'DOGE 效率审计', state: 'congress', priority: 'high', agent: 'doge_musk' },
+            { id: 'TRUMP-003', title: '税改法案', state: 'potus', priority: 'high', agent: 'treasury' },
+            { id: 'TRUMP-004', title: '安全审查', state: 'cabinet', priority: 'normal', agent: 'defense' },
+            { id: 'TRUMP-005', title: '贸易谈判', state: 'doing', priority: 'critical', agent: 'commerce' },
+            { id: 'TRUMP-006', title: '基建计划', state: 'done', priority: 'normal', agent: 'energy' }
         ];
-
         this.agents = [
-            { id: 'trump_president', name: 'POTUS', efficiency: 95, status: 'active' },
-            { id: 'doge_musk', name: 'DOGE', efficiency: 88, status: 'active' },
-            { id: 'defense', name: 'Defense', efficiency: 94, status: 'active' },
-            { id: 'commerce', name: 'Commerce', efficiency: 45, status: 'warning' },
-            { id: 'treasury', name: 'Treasury', efficiency: 87, status: 'active' },
-            { id: 'congress_senate', name: 'Senate', efficiency: 72, status: 'active' }
+            { id: 'trump_president', efficiency: 95, status: 'active' },
+            { id: 'doge_musk', efficiency: 88, status: 'active' },
+            { id: 'defense', efficiency: 94, status: 'active' },
+            { id: 'commerce', efficiency: 45, status: 'warning' },
+            { id: 'treasury', efficiency: 87, status: 'active' }
         ];
-
         this.posts = [
-            { agent: 'trump_president', content: 'TREMENDOUS progress on the Border Wall API! Nobody builds better APIs than us!!! #MAGA #Winning', time: '2 min ago', avatar: '🎩' },
-            { agent: 'doge_musk', content: '🐕 Found $247.32 in waste today! Fired 3 inefficient agents! DRAINING THE SWAMP!!!', time: '5 min ago', avatar: '🐕' },
-            { agent: 'congress_senate', content: 'Bill passed with 2/3 majority! Great work from both sides of the aisle.', time: '15 min ago', avatar: '🏛️' }
+            { agent_id: 'trump_president', content: '边境墙 API 进展 TREMENDOUS！没人比我们造得更好！#MAGA', timestamp: new Date().toISOString() },
+            { agent_id: 'doge_musk', content: '🐕 今天发现 $247.32 浪费！解雇 3 个低效智能体！排干沼泽！', timestamp: new Date().toISOString() }
         ];
     }
 
-    // Render Methods
+    // ===== 渲染 =====
     renderAll() {
         this.renderKanban();
         this.renderMonitor();
@@ -116,15 +109,13 @@ class MAGAgentsDashboard {
 
     renderKanban() {
         const states = ['pending', 'congress', 'potus', 'cabinet', 'doing', 'done'];
-        
         states.forEach(state => {
             const container = document.getElementById(`${state}Tasks`);
             if (!container) return;
-            
             const stateTasks = this.tasks.filter(t => t.state === state);
-            container.innerHTML = stateTasks.map(task => this.createTaskCard(task)).join('');
-            
-            // Add click handlers
+            container.innerHTML = stateTasks.length
+                ? stateTasks.map(t => this.createTaskCard(t)).join('')
+                : '<div class="task-empty">暂无任务</div>';
             container.querySelectorAll('.task-card').forEach(card => {
                 card.addEventListener('click', () => this.showTaskDetail(card.dataset.taskId));
             });
@@ -132,251 +123,266 @@ class MAGAgentsDashboard {
     }
 
     createTaskCard(task) {
-        const priorityClass = task.priority === 'critical' ? 'critical' : task.priority === 'high' ? 'high-priority' : '';
+        const cls = task.priority === 'critical' ? 'critical' : task.priority === 'high' ? 'high-priority' : '';
+        const agent = task.agent || task.assigned_agent || '未指派';
         return `
-            <div class="task-card ${priorityClass}" data-task-id="${task.id}">
-                <div class="task-title">${task.title}</div>
+            <div class="task-card ${cls}" data-task-id="${task.id}">
+                <div class="task-title">${this.escape(task.title)}</div>
                 <div class="task-meta">
-                    <span>${task.agent || 'Unassigned'}</span>
-                    <span>${task.priority.toUpperCase()}</span>
+                    <span>👤 ${this.escape(agent)}</span>
+                    <span>${PRIORITY_CN[task.priority] || task.priority}</span>
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 
     renderMonitor() {
         const total = this.tasks.length;
-        const active = this.tasks.filter(t => !['done', 'cancelled'].includes(t.state)).length;
+        const active = this.tasks.filter(t => !['done', 'vetoed', 'fired'].includes(t.state)).length;
         const completed = this.tasks.filter(t => t.state === 'done').length;
         const fired = this.agents.filter(a => a.status === 'fired').length;
-
         document.getElementById('totalTasks').textContent = total;
         document.getElementById('activeTasks').textContent = active;
         document.getElementById('completedTasks').textContent = completed;
         document.getElementById('firedAgents').textContent = fired;
-
-        // Render chart
         this.renderTaskChart();
     }
 
     renderTaskChart() {
         const canvas = document.getElementById('taskChart');
         if (!canvas) return;
-        
         const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth; canvas.height = 240;
+        const labels = ['待处理', '国会', '总统', '内阁', '执行', '完成'];
         const states = ['pending', 'congress', 'potus', 'cabinet', 'doing', 'done'];
         const counts = states.map(s => this.tasks.filter(t => t.state === s).length);
-        
-        // Simple bar chart
         const maxCount = Math.max(...counts, 1);
-        const barWidth = canvas.width / states.length - 10;
-        
+        const barWidth = canvas.width / states.length - 16;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        states.forEach((state, i) => {
-            const height = (counts[i] / maxCount) * (canvas.height - 30);
-            const x = i * (barWidth + 10) + 5;
-            const y = canvas.height - height - 20;
-            
-            ctx.fillStyle = '#D4AF37';
-            ctx.fillRect(x, y, barWidth, height);
-            
-            ctx.fillStyle = '#fff';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(state, x + barWidth/2, canvas.height - 5);
-            ctx.fillText(counts[i], x + barWidth/2, y - 5);
+        states.forEach((s, i) => {
+            const h = (counts[i] / maxCount) * (canvas.height - 50);
+            const x = i * (barWidth + 16) + 8;
+            const y = canvas.height - h - 26;
+            const grad = ctx.createLinearGradient(0, y, 0, y + h);
+            grad.addColorStop(0, '#e0b13a'); grad.addColorStop(1, '#b8860b');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.roundRect(x, y, barWidth, h, 6); ctx.fill();
+            ctx.fillStyle = '#9aa6c0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText(labels[i], x + barWidth / 2, canvas.height - 6);
+            ctx.fillStyle = '#e8edf7';
+            ctx.fillText(counts[i], x + barWidth / 2, y - 6);
         });
     }
 
     renderCongress() {
-        // Render Senate bills
-        const senateBills = this.tasks.filter(t => t.state === 'congress');
-        document.getElementById('senateBills').innerHTML = senateBills.map(task => `
-            <div class="bill-item">
-                <span>${task.title}</span>
-                <span class="vote-status">🗳️ Voting...</span>
-            </div>
-        `).join('');
-
-        // Render House bills
-        document.getElementById('houseBills').innerHTML = senateBills.map(task => `
-            <div class="bill-item">
-                <span>${task.title}</span>
-                <span class="vote-status">⏳ Queue</span>
-            </div>
-        `).join('');
+        const bills = this.tasks.filter(t => t.state === 'congress');
+        const html = bills.length ? bills.map(t => `
+            <div class="bill-item"><span>${this.escape(t.title)}</span>
+            <span class="vote-status">🗳️ 表决中</span></div>`).join('')
+            : '<div class="task-empty">国会无待审法案</div>';
+        document.getElementById('senateBills').innerHTML = html;
+        document.getElementById('houseBills').innerHTML = bills.length ? bills.map(t => `
+            <div class="bill-item"><span>${this.escape(t.title)}</span>
+            <span class="vote-status">⏳ 排队中</span></div>`).join('')
+            : '<div class="task-empty">众议院无待审法案</div>';
     }
 
     renderDOGE() {
-        // Calculate waste metrics
-        const waste = this.agents.reduce((sum, a) => sum + (100 - a.efficiency) * 10, 0);
-        const fired = this.agents.filter(a => a.status === 'fired').length;
-        const avgEff = this.agents.reduce((sum, a) => sum + a.efficiency, 0) / this.agents.length;
-        const gain = Math.round((95 - avgEff) * 2);
-
+        const agents = this.agents.length ? this.agents : [];
+        const fired = agents.filter(a => a.status === 'fired').length;
+        const avgEff = agents.length ? agents.reduce((s, a) => s + (a.efficiency || 0), 0) / agents.length : 0;
+        const waste = agents.reduce((s, a) => s + (100 - (a.efficiency || 0)) * 5, 0);
         document.getElementById('wasteAmount').textContent = `$${waste.toFixed(2)}`;
         document.getElementById('dogeFired').textContent = fired;
-        document.getElementById('efficiencyGain').textContent = `${gain}%`;
-
-        // Render leaderboard
+        document.getElementById('efficiencyGain').textContent = `${Math.max(0, Math.round(95 - avgEff))}%`;
         const tbody = document.querySelector('#leaderboardTable tbody');
-        const sortedAgents = [...this.agents].sort((a, b) => b.efficiency - a.efficiency);
-        
-        tbody.innerHTML = sortedAgents.map(agent => `
+        const statusCn = { active: '在岗', warning: '警告', fired: '已解雇' };
+        const sorted = [...agents].sort((a, b) => (b.efficiency || 0) - (a.efficiency || 0));
+        tbody.innerHTML = sorted.length ? sorted.map(a => `
             <tr>
-                <td>${agent.name}</td>
-                <td>${agent.efficiency}%</td>
-                <td><span class="status-${agent.status}">${agent.status}</span></td>
-            </tr>
-        `).join('');
+                <td>${this.escape(a.id || a.name || '?')}</td>
+                <td>${Math.round(a.efficiency || 0)}%</td>
+                <td><span class="status-${a.status}">${statusCn[a.status] || a.status}</span></td>
+            </tr>`).join('') : '<tr><td colspan="3" class="task-empty">暂无数据，先派个任务吧</td></tr>';
     }
 
     renderTruthSocial() {
+        const avatars = { trump_president: '🎩', doge_musk: '🐕', scotus: '⚖️', congress_senate: '🏛️', congress_house: '🏛️' };
         const container = document.getElementById('truthPosts');
-        container.innerHTML = this.posts.map(post => `
+        container.innerHTML = this.posts.length ? this.posts.map(p => `
             <div class="post">
                 <div class="post-header">
-                    <div class="post-avatar">${post.avatar}</div>
+                    <div class="post-avatar">${avatars[p.agent_id] || '🏢'}</div>
                     <div>
-                        <div class="post-author">@${post.agent}</div>
-                        <div class="post-time">${post.time}</div>
+                        <div class="post-author">@${this.escape(p.agent_id)}</div>
+                        <div class="post-time">${this.timeAgo(p.timestamp)}</div>
                     </div>
                 </div>
-                <div class="post-content">${post.content}</div>
-                <div class="post-hashtags">#MAGA #Winning #BestAgents</div>
-            </div>
-        `).join('');
+                <div class="post-content">${this.escape(p.content)}</div>
+                <div class="post-hashtags">#MAGA #Winning</div>
+            </div>`).join('') : '<div class="task-empty">还没有动态，派个任务看智能体发言</div>';
     }
 
-    // Actions
+    // ===== 任务详情 =====
     showTaskDetail(taskId) {
         const task = this.tasks.find(t => t.id === taskId);
         if (!task) return;
-
-        const agent = task.agent || task.assigned_agent || 'Unassigned';
+        this.currentTask = task;
+        const agent = task.agent || task.assigned_agent || '未指派';
         const cost = (task.cost != null) ? `$${Number(task.cost).toFixed(5)}` : '$0';
         const tokens = task.tokens_used || 0;
 
-        // Decision trace (from agentic runs)
         const trace = task.decision_trace || [];
         let traceHtml = '';
         if (trace.length) {
-            const icons = { congress: '🏛️', scotus: '⚖️', potus: '🎩', cabinet: '🏢', doge: '🐕' };
-            const rows = trace.map(step => {
-                const verdict = step.vote || step.decision || step.ruling || step.verdict
-                    || (step.output_preview ? 'executed' : '');
-                const detail = step.reason || step.output_preview || '';
-                const eff = (step.efficiency != null) ? ` · eff ${Number(step.efficiency).toFixed(0)}%` : '';
+            const rows = trace.map(s => {
+                const verdict = s.vote || s.decision || s.ruling || s.verdict || (s.output_preview ? '已执行' : '');
+                const detail = s.reason || s.output_preview || '';
+                const eff = (s.efficiency != null) ? ` · 效率 ${Number(s.efficiency).toFixed(0)}%` : '';
                 return `<div class="trace-step">
-                    <span class="trace-stage">${icons[step.stage] || '•'} ${(step.stage || '').toUpperCase()}</span>
-                    <span class="trace-agent">@${step.agent || '?'}</span>
-                    <span class="trace-verdict">${verdict}${eff}</span>
+                    <span class="trace-stage">${STAGE_ICON[s.stage] || '•'} ${STAGE_CN[s.stage] || (s.stage || '')}</span>
+                    <span class="trace-agent">@${this.escape(s.agent || '?')}</span>
+                    <span class="trace-verdict">${this.escape(verdict)}${eff}</span>
                     <div class="trace-detail">${this.escape(detail)}</div>
                 </div>`;
             }).join('');
-            traceHtml = `<h4>🧭 Decision Trace</h4><div class="decision-trace">${rows}</div>`;
+            traceHtml = `<h4>🧭 决策链</h4><div class="decision-trace">${rows}</div>`;
         }
-
-        const outcomeBadge = task.outcome
-            ? `<span class="outcome-badge outcome-${task.outcome}">${task.outcome.toUpperCase()}</span>` : '';
+        const badge = task.outcome
+            ? `<span class="outcome-badge outcome-${task.outcome}">${OUTCOME_CN[task.outcome] || task.outcome}</span>` : '';
         const outputHtml = task.output
-            ? `<h4>📄 Deliverable</h4><div class="task-output">${this.escape(task.output)}</div>` : '';
+            ? `<h4>📄 交付物</h4><div class="task-output">${this.escape(task.output)}</div>` : '';
 
         document.getElementById('modalTitle').textContent = task.title;
         document.getElementById('modalBody').innerHTML = `
-            <p><strong>ID:</strong> ${task.id} ${outcomeBadge}</p>
-            <p><strong>State:</strong> ${task.state}</p>
-            <p><strong>Priority:</strong> ${task.priority}</p>
-            <p><strong>Assigned:</strong> ${agent}</p>
-            <p><strong>Cost:</strong> ${cost} &nbsp; <strong>Tokens:</strong> ${tokens}</p>
-            <p><strong>Created:</strong> ${task.created ? new Date(task.created).toLocaleString() : '—'}</p>
-            <button class="btn-run" id="runAgenticBtn">▶️ Run (Agentic)</button>
-            ${traceHtml}
-            ${outputHtml}
-        `;
-
+            <p><strong>编号：</strong>${task.id} ${badge}</p>
+            <p><strong>状态：</strong>${task.state}</p>
+            <p><strong>优先级：</strong>${PRIORITY_CN[task.priority] || task.priority}</p>
+            <p><strong>负责：</strong>${this.escape(agent)}</p>
+            <p><strong>花费：</strong>${cost} &nbsp; <strong>Token：</strong>${tokens}</p>
+            <button class="btn-run" id="runAgenticBtn">▶️ 运行政府流程</button>
+            ${traceHtml}${outputHtml}`;
         const runBtn = document.getElementById('runAgenticBtn');
         if (runBtn) runBtn.addEventListener('click', () => this.runAgentic(task.id));
-
         document.getElementById('taskModal').classList.add('active');
-        this.currentTask = task;
     }
 
-    escape(s) {
-        return String(s || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    // ===== 动作 =====
+    async createTask() {
+        const input = document.getElementById('newTaskTitle');
+        const title = (input.value || '').trim();
+        if (!title) { this.showToast('请输入任务内容'); return; }
+        const btn = document.getElementById('createTaskBtn');
+        btn.disabled = true; btn.textContent = '创建中…';
+        try {
+            const r = await fetch('/api/task/create', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, priority: 'high' })
+            });
+            const res = await r.json();
+            input.value = '';
+            if (res.task_id && document.getElementById('autoRun').checked) {
+                this.showToast('任务已创建，正在跑政府流程…');
+                await fetch('/api/task/run', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_id: res.task_id })
+                });
+                await this.loadData();
+                this.showTaskDetail(res.task_id);
+            } else {
+                this.showToast('任务已创建');
+                await this.loadData();
+            }
+        } catch (e) {
+            this.showToast('创建失败（确认用 server.py 启动，而非纯静态）');
+        } finally {
+            btn.disabled = false; btn.textContent = '＋ 新建任务';
+        }
     }
 
     async runAgentic(taskId) {
         const btn = document.getElementById('runAgenticBtn');
-        if (btn) { btn.disabled = true; btn.textContent = '⏳ Running government flow...'; }
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ 政府流程运行中…'; }
         try {
-            const res = await fetch('/api/task/run', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const r = await fetch('/api/task/run', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ task_id: taskId })
             });
-            const result = await res.json();
+            const res = await r.json();
             await this.loadData();
-            this.showTaskDetail(taskId);  // re-render with fresh trace
-            if (!result.llm_enabled) {
-                this.addPost('doge_musk', '🤖 Ran in OFFLINE mode (no API key) — decisions auto-approved.', '🐕');
-            }
+            this.showTaskDetail(taskId);
+            this.showToast(`完成：${OUTCOME_CN[res.outcome] || res.outcome}` + (res.llm_enabled ? '' : '（离线模式）'));
         } catch (e) {
-            if (btn) { btn.disabled = false; btn.textContent = '▶️ Run (Agentic)'; }
-            console.error('runAgentic failed', e);
+            if (btn) { btn.disabled = false; btn.textContent = '▶️ 运行政府流程'; }
+            this.showToast('运行失败（需用 server.py 启动）');
         }
     }
 
-    approveTask() {
-        if (this.currentTask) {
-            this.currentTask.state = 'cabinet';
-            this.addPost('trump_president', `✅ APPROVED ${this.currentTask.title}! TREMENDOUS!!!`, '🎩');
-            this.renderAll();
-            document.getElementById('taskModal').classList.remove('active');
+    async approveTask() {
+        if (!this.currentTask) return;
+        await fetch('/api/task/action', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: this.currentTask.id, action: 'approve' })
+        }).catch(() => {});
+        document.getElementById('taskModal').classList.remove('active');
+        this.showToast('已批准'); this.loadData();
+    }
+
+    async vetoTask() {
+        if (!this.currentTask) return;
+        await fetch('/api/task/action', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: this.currentTask.id, action: 'veto', reason: '总统否决' })
+        }).catch(() => {});
+        document.getElementById('taskModal').classList.remove('active');
+        this.showToast('已否决'); this.loadData();
+    }
+
+    async fireAgent() {
+        if (!this.currentTask) return;
+        const agent = this.currentTask.agent || this.currentTask.assigned_agent;
+        if (agent) {
+            await fetch('/api/agent/fire', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ agent_id: agent, reason: 'INEFFICIENCY' })
+            }).catch(() => {});
+            this.showToast(`@${agent} 你被解雇了！`);
         }
+        document.getElementById('taskModal').classList.remove('active');
+        this.loadData();
     }
 
-    vetoTask() {
-        if (this.currentTask) {
-            this.currentTask.state = 'cancelled';
-            this.addPost('trump_president', `❌ VETOED ${this.currentTask.title}! Total disaster!!!`, '🎩');
-            this.renderAll();
-            document.getElementById('taskModal').classList.remove('active');
-        }
+    // ===== 工具 =====
+    escape(s) {
+        return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
     }
 
-    fireAgent() {
-        if (this.currentTask && this.currentTask.agent) {
-            const agent = this.agents.find(a => a.id === this.currentTask.agent);
-            if (agent) {
-                agent.status = 'fired';
-                this.addPost('trump_president', `@${agent.name} You're FIRED!!! Incompetent!!!`, '🎩');
-                this.renderAll();
-            }
-            document.getElementById('taskModal').classList.remove('active');
-        }
+    timeAgo(ts) {
+        if (!ts) return '刚刚';
+        const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+        if (diff < 60) return '刚刚';
+        if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+        return `${Math.floor(diff / 86400)} 天前`;
     }
 
-    addPost(agent, content, avatar) {
-        this.posts.unshift({
-            agent,
-            content,
-            avatar,
-            time: 'Just now'
-        });
-        if (this.posts.length > 50) this.posts.pop();
+    showToast(msg) {
+        const el = document.getElementById('toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(this._toastT);
+        this._toastT = setTimeout(() => el.classList.remove('show'), 2600);
     }
 
-    // Auto Refresh
     startAutoRefresh() {
         this.refreshInterval = setInterval(() => {
-            this.refreshCurrentTab();
-        }, 5000);
+            const modalOpen = document.getElementById('taskModal').classList.contains('active');
+            if (!modalOpen) this.loadData();
+        }, 8000);
     }
 
     refreshCurrentTab() {
-        switch(this.currentTab) {
+        switch (this.currentTab) {
             case 'kanban': this.renderKanban(); break;
             case 'monitor': this.renderMonitor(); break;
             case 'congress': this.renderCongress(); break;
@@ -384,13 +390,8 @@ class MAGAgentsDashboard {
             case 'truth': this.renderTruthSocial(); break;
         }
     }
-
-    renderInitialData() {
-        this.renderAll();
-    }
 }
 
-// Initialize Dashboard
 document.addEventListener('DOMContentLoaded', () => {
     window.dashboard = new MAGAgentsDashboard();
 });

@@ -8,7 +8,7 @@ Port: 7892
 import json
 import sys
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
 # Ensure emoji/Unicode output works on all platforms (e.g. Windows GBK consoles)
@@ -81,6 +81,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             
             if path == '/api/task/action':
                 result = self.handle_task_action(data)
+            elif path == '/api/task/create':
+                result = self.handle_create_task(data)
             elif path == '/api/task/run':
                 result = self.handle_run_agentic(data)
             elif path == '/api/agent/fire':
@@ -145,7 +147,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
             'active_tasks': summary['active_tasks'],
             'completed_tasks': summary.get('completed_tasks', 0),
             'efficiency': summary['doge_summary']['avg_efficiency'],
-            'approval_rating': 87  # Mock for now
+            'approval_rating': 87,  # Mock for now
+            'llm_enabled': summary.get('llm_enabled', False),
+            'llm_usage': summary.get('llm_usage', {})
         }
     
     def get_doge_report(self):
@@ -187,6 +191,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
         
         return {'success': success}
     
+    def handle_create_task(self, data):
+        """Create a new task from the dashboard."""
+        title = (data.get('title') or '').strip()
+        if not title:
+            return {'success': False, 'error': 'Empty title'}
+        task = self.orchestrator.create_task(
+            title=title,
+            description=data.get('description', ''),
+            priority=data.get('priority', 'normal'),
+        )
+        return {'success': True, 'task_id': task.id}
+
     def handle_run_agentic(self, data):
         """Run a task through the full agentic government flow."""
         task_id = data.get('task_id')
@@ -226,7 +242,7 @@ class DashboardServer:
     
     def start(self):
         """Start server in background thread"""
-        self.server = HTTPServer(('0.0.0.0', self.port), DashboardHandler)
+        self.server = ThreadingHTTPServer(('0.0.0.0', self.port), DashboardHandler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         print(f"🚀 Dashboard server running on http://localhost:{self.port}")
@@ -262,7 +278,7 @@ def serve_static(port=7892):
                     self.path = '/dashboard.html'
                 SimpleHTTPRequestHandler.do_GET(self)
     
-    server = HTTPServer(('0.0.0.0', port), CombinedHandler)
+    server = ThreadingHTTPServer(('0.0.0.0', port), CombinedHandler)
     print(f"🚀 MAGAgents Dashboard")
     print(f"📊 URL: http://localhost:{port}")
     print(f"🏛️  The Oval Office Command Center")
