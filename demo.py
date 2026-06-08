@@ -247,17 +247,57 @@ def demo_orchestrator():
         print(f"   • 🤖 LLM: OFF (offline template mode)")
 
 
+def demo_agentic():
+    """Demo P3: agents make the REAL decisions and execute the task."""
+    print_header("AGENTIC GOVERNMENT (real decisions)")
+
+    import tempfile
+    # Fresh, isolated data dir so this showcase isn't affected by earlier
+    # demo sections' persisted DOGE history.
+    orch = MAGAgentsOrchestrator(data_dir=Path(tempfile.mkdtemp()))
+    if not orch.llm_enabled:
+        print("\n🤖 LLM is OFF — running in offline auto-approve mode.")
+        print("   Set an API key in .env to see real Congress/POTUS/Cabinet decisions.")
+
+    task = orch.create_task(
+        title="Draft a one-paragraph press release announcing a new trade deal",
+        description="Audience: the American public. Keep it punchy.",
+        priority="high",
+    )
+    print(f"\n📋 Task: {task.title}")
+    print("\n🏛️ Running full government flow (Congress → POTUS → Cabinet → DOGE)...")
+
+    result = orch.run_task_agentic(task.id)
+
+    print(f"\n🧭 DECISION TRACE:")
+    for step in result.get("trace", []):
+        stage = step.get("stage", "?").upper()
+        agent = step.get("agent", "?")
+        verdict = step.get("vote") or step.get("decision") or step.get("ruling") \
+            or step.get("verdict") or step.get("output_preview", "")
+        print(f"   • [{stage}] @{agent}: {str(verdict)[:80]}")
+
+    print(f"\n🏁 OUTCOME: {result.get('outcome', '?').upper()}")
+    if result.get("output"):
+        print(f"\n📄 CABINET DELIVERABLE:\n   {result['output'][:400]}")
+
+    u = orch.llm_usage
+    print(f"\n💸 LLM usage this run: {u['input_tokens']}+{u['output_tokens']} tokens, "
+          f"${u['cost']:.5f}")
+
+
 def main():
     """Run all demos."""
     print("\n" + "🎩" * 30)
     print("     MAGAgents - FULL DEMO")
     print("🎩" * 30)
-    
+
     demo_trump_style()
     demo_doge()
     demo_firing()
     demo_tariffs()
     demo_orchestrator()
+    demo_agentic()
     
     print("\n" + "=" * 60)
     print("🇺🇸 DEMO COMPLETE!")

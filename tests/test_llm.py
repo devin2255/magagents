@@ -145,5 +145,44 @@ class TestOrchestratorFallback(unittest.TestCase):
             del os.environ["MAGAGENTS_LLM_ENABLED"]
 
 
+class TestAgenticFlow(unittest.TestCase):
+    """P3: run_task_agentic drives a task end-to-end with decisions."""
+
+    def _orch(self):
+        import importlib, orchestrator, tempfile
+        importlib.reload(orchestrator)
+        return orchestrator.MAGAgentsOrchestrator(data_dir=Path(tempfile.mkdtemp())), orchestrator
+
+    def test_agentic_offline_completes(self):
+        os.environ["MAGAGENTS_LLM_ENABLED"] = "off"
+        try:
+            orch, _ = self._orch()
+            self.assertFalse(orch.llm_enabled)
+            task = orch.create_task("Build API", "REST endpoint", "high")
+            result = orch.run_task_agentic(task.id)
+            self.assertEqual(result["outcome"], "done")        # offline auto-approves
+            self.assertEqual(orch.get_task(task.id).state.name, "DONE")
+            self.assertTrue(len(result["trace"]) >= 4)         # congress/potus/cabinet/doge
+            self.assertTrue(orch.get_task(task.id).output)
+        finally:
+            del os.environ["MAGAGENTS_LLM_ENABLED"]
+
+    def test_agentic_records_real_tokens_to_doge(self):
+        os.environ["DEEPSEEK_API_KEY"] = "sk-test"
+        try:
+            import importlib, orchestrator, tempfile
+            importlib.reload(orchestrator)
+            orch = orchestrator.MAGAgentsOrchestrator(data_dir=Path(tempfile.mkdtemp()))
+            orch.llm = LLMClient(load_config(), provider_factory=fake_factory)  # inject fake
+            self.assertTrue(orch.llm_enabled)
+            task = orch.create_task("Build API", "desc", "high")
+            orch.run_task_agentic(task.id)
+            # FakeProvider reports 11+7 tokens per call -> usage must be > 0
+            self.assertGreater(orch.llm_usage["input_tokens"], 0)
+            self.assertGreater(len(orch.doge.agent_history), 0)  # DOGE saw real usage
+        finally:
+            os.environ.pop("DEEPSEEK_API_KEY", None)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

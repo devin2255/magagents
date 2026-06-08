@@ -269,6 +269,20 @@ python demo.py
 - **优雅降级**：没配 key（或没装依赖）时自动回退模板模式 —— `demo.py` 和测试永远能跑。
 - 真实 token 用量会进入系统摘要（`llm_usage`）并喂给 DOGE 审计。
 
+**Agentic 模式** —— 让角色自己端到端做决策：
+
+```python
+orch = MAGAgentsOrchestrator()
+task = orch.create_task("起草一份新闻稿", "简短有力", "high")
+result = orch.run_task_agentic(task.id)
+#  国会投票 -> 总统批准/否决并指派 -> 内阁真执行
+#  -> DOGE 基于真实 token 审计 -> 完成 / 解雇
+print(result["outcome"], result.get("output"))
+```
+
+离线时自动放行并产出占位结果（完全可测试）；配了 key 就是真正的多智能体决策。
+跑 `python demo.py` 末尾可直接看到实战效果。
+
 > 🔒 API Key 只从环境变量读取，绝不提交（`.env` 已加入 .gitignore）。
 
 ## 🧪 测试

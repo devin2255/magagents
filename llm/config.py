@@ -95,8 +95,11 @@ class LLMConfig:
 
 
 def load_config(path: Path = CONFIG_PATH) -> LLMConfig:
-    """Load models.yaml (or built-in fallback). Also loads .env if present."""
-    load_dotenv_if_present()
+    """Load models.yaml (or built-in fallback).
+
+    Note: this does NOT read .env (keeps config pure for tests). App entry
+    points call `load_dotenv_if_present()` explicitly before constructing a client.
+    """
     raw = None
     try:
         import yaml  # type: ignore

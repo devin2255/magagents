@@ -237,6 +237,8 @@ class MAGAgentsOrchestrator:
         self.llm_usage = {"input_tokens": 0, "output_tokens": 0, "cost": 0.0}
         if _LLM_IMPORT_OK:
             try:
+                from llm.config import load_dotenv_if_present
+                load_dotenv_if_present()  # pick up project .env at app startup
                 self.llm = LLMClient(load_config())
             except Exception:
                 self.llm = None
@@ -285,6 +287,159 @@ class MAGAgentsOrchestrator:
             except Exception:
                 pass
         return text or fallback
+
+    def _account_usage(self, task: Task, agent_id: str, in_tok: int, out_tok: int,
+                       elapsed: float, success: bool):
+        """Roll real LLM usage into llm_usage, the task, and DOGE's audit DB."""
+        cost = 0.0
+        if in_tok or out_tok:
+            self.llm_usage["input_tokens"] += in_tok
+            self.llm_usage["output_tokens"] += out_tok
+            try:
+                cost = self.llm.cost_of(agent_id, in_tok, out_tok)
+            except Exception:
+                cost = 0.0
+            self.llm_usage["cost"] += cost
+            task.tokens_used += in_tok + out_tok
+            task.cost += cost
+            # Feed real numbers to DOGE so audits/firings use genuine data.
+            self.doge.record_task_completion(
+                agent_id, in_tok + out_tok, cost, elapsed, success
+            )
+
+    def _agent_decide(self, task: Task, agent_id: str, instruction: str,
+                      schema_hint: str, fallback: dict) -> dict:
+        """Ask an agent for a structured decision; record real usage; degrade offline."""
+        if not self.llm_enabled or _agent_runtime is None:
+            return fallback
+        start = time.time()
+        data, in_tok, out_tok = _agent_runtime.decide(
+            self.llm, agent_id, instruction, schema_hint
+        )
+        self._account_usage(task, agent_id, in_tok, out_tok,
+                            time.time() - start, success=bool(data))
+        result = dict(fallback)
+        if isinstance(data, dict):
+            result.update(data)
+        return result
+
+    def _agent_produce(self, task: Task, agent_id: str, instruction: str,
+                       fallback: str) -> str:
+        """Have a cabinet agent actually perform work and return its output."""
+        if not self.llm_enabled or _agent_runtime is None:
+            return fallback
+        start = time.time()
+        system = _agent_runtime.load_soul(agent_id)
+        try:
+            res = self.llm.chat_as(agent_id, system=system, user=instruction,
+                                   max_tokens=900)
+            text, in_tok, out_tok = res.text, res.input_tokens, res.output_tokens
+        except Exception:
+            text, in_tok, out_tok = None, 0, 0
+        self._account_usage(task, agent_id, in_tok, out_tok,
+                            time.time() - start, success=bool(text))
+        return text or fallback
+
+    def run_task_agentic(self, task_id: str) -> dict:
+        """Drive a task through the full government with REAL agent decisions.
+
+        Congress votes -> POTUS approves/vetoes & assigns -> Cabinet executes
+        -> DOGE audits (real tokens) -> Done / Fired. Works offline too (agents
+        auto-approve and emit placeholders), so it is fully testable without keys.
+        """
+        task = self.tasks.get(task_id)
+        if not task:
+            return {"error": "Task not found"}
+
+        ctx = f"Task: {task.title}\nDescription: {task.description}\nPriority: {task.priority}"
+        trace = []
+
+        # 1) Congress review --------------------------------------------------
+        self.transition_state(task_id, AgentState.CONGRESS)
+        vote = self._agent_decide(
+            task, "congress_senate",
+            instruction=f"As the U.S. Senate, debate whether this task should proceed.\n{ctx}",
+            schema_hint='{"vote": "pass" | "reject", "reason": "<one sentence>"}',
+            fallback={"vote": "pass", "reason": "Auto-approved (offline mode)."},
+        )
+        trace.append({"stage": "congress", "agent": "congress_senate", **vote})
+
+        if str(vote.get("vote")).lower() == "reject":
+            # Dispute goes to the Supreme Court for arbitration.
+            self.transition_state(task_id, AgentState.SCOTUS, vote.get("reason", ""))
+            ruling = self._agent_decide(
+                task, "scotus",
+                instruction=f"Congress rejected this task: '{vote.get('reason')}'. "
+                            f"Rule whether it may still proceed to the President.\n{ctx}",
+                schema_hint='{"ruling": "proceed" | "block", "reason": "<one sentence>"}',
+                fallback={"ruling": "proceed", "reason": "No constitutional issue (offline)."},
+            )
+            trace.append({"stage": "scotus", "agent": "scotus", **ruling})
+            if str(ruling.get("ruling")).lower() == "block":
+                task.block = ruling.get("reason", "Blocked by SCOTUS")
+                self.save_tasks()
+                return {"task_id": task_id, "outcome": "blocked", "trace": trace}
+            self.transition_state(task_id, AgentState.POTUS, "SCOTUS allowed to proceed")
+        else:
+            self.transition_state(task_id, AgentState.POTUS, vote.get("reason", ""))
+
+        # 2) Presidential decision -------------------------------------------
+        cabinet = [a for a, s in self.AGENT_STATES.items() if s == AgentState.CABINET]
+        potus = self._agent_decide(
+            task, "trump_president",
+            instruction=f"As President, decide whether to APPROVE or VETO this task, and "
+                        f"which Cabinet department should execute it. Choose assignee from: "
+                        f"{', '.join(cabinet)}.\n{ctx}",
+            schema_hint='{"decision": "approve" | "veto", '
+                        '"assignee": "<cabinet agent id>", "reason": "<one sentence>"}',
+            fallback={"decision": "approve", "assignee": "commerce",
+                      "reason": "TREMENDOUS idea (offline)."},
+        )
+        trace.append({"stage": "potus", "agent": "trump_president", **potus})
+
+        if str(potus.get("decision")).lower() == "veto":
+            self.veto_task(task_id, potus.get("reason", "Vetoed by POTUS"))
+            return {"task_id": task_id, "outcome": "vetoed", "trace": trace}
+
+        assignee = potus.get("assignee") if potus.get("assignee") in cabinet else "commerce"
+        self.approve_task(task_id)  # POTUS -> CABINET
+        self.assign_to_agent(task_id, assignee)
+
+        # 3) Cabinet execution (real work) -----------------------------------
+        self.transition_state(task_id, AgentState.DOING, f"Assigned to {assignee}")
+        output = self._agent_produce(
+            task, assignee,
+            instruction=f"You are the '{assignee}' department. Carry out this task and "
+                        f"return your concrete deliverable / result.\n{ctx}",
+            fallback=f"[offline] {assignee} completed: {task.title}",
+        )
+        task.output = output
+        task.add_progress_log(assignee, output[:500], tokens=task.tokens_used, cost=task.cost)
+        self.save_tasks()
+        trace.append({"stage": "cabinet", "agent": assignee, "output_preview": output[:200]})
+
+        # 4) DOGE audit on REAL usage ----------------------------------------
+        perf = self.doge.agent_history.get(assignee)
+        efficiency = perf.efficiency_score if perf else 100.0
+        audit = self._agent_decide(
+            task, "doge_musk",
+            instruction=f"Audit @{assignee}'s execution. Measured efficiency is "
+                        f"{efficiency:.0f}%. Decide whether to PASS or FIRE them.\n{ctx}",
+            schema_hint='{"verdict": "pass" | "fire", "reason": "<one sentence>"}',
+            fallback={"verdict": "pass" if efficiency >= 30 else "fire",
+                      "reason": f"Efficiency {efficiency:.0f}% (offline rule)."},
+        )
+        trace.append({"stage": "doge", "agent": "doge_musk", "efficiency": efficiency, **audit})
+
+        if str(audit.get("verdict")).lower() == "fire" or efficiency < 30:
+            self.transition_state(task_id, AgentState.DOGE_AUDIT, "DOGE flagged inefficiency")
+            self.fire_agent(assignee, audit.get("reason", "INEFFICIENCY"), "doge_musk")
+            return {"task_id": task_id, "outcome": "fired", "assignee": assignee,
+                    "efficiency": efficiency, "trace": trace}
+
+        self.transition_state(task_id, AgentState.DONE)
+        return {"task_id": task_id, "outcome": "done", "assignee": assignee,
+                "efficiency": efficiency, "output": output, "trace": trace}
 
     def create_task(self, title: str, description: str = "",
                     priority: str = "normal") -> Task:

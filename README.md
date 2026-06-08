@@ -267,6 +267,20 @@ python demo.py
   automatically falls back to template mode — `demo.py` and the test suite always work.
 - Real token usage flows into the system summary (`llm_usage`) and feeds DOGE audits.
 
+**Agentic mode** — let the agents make the *real* decisions end-to-end:
+
+```python
+orch = MAGAgentsOrchestrator()
+task = orch.create_task("Draft a press release", "Keep it punchy", "high")
+result = orch.run_task_agentic(task.id)
+#  Congress votes -> POTUS approves/vetoes & assigns -> Cabinet executes
+#  -> DOGE audits on REAL token usage -> Done / Fired
+print(result["outcome"], result.get("output"))
+```
+
+Offline it auto-approves with placeholder output (fully testable); with keys it
+runs genuine multi-agent decisions. See it live at the end of `python demo.py`.
+
 > 🔒 API keys are read from environment variables only and never committed (`.env` is gitignored).
 
 ## 🧪 Testing
