@@ -11,7 +11,23 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "models.yaml"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+CONFIG_PATH = PROJECT_ROOT / "config" / "models.yaml"
+ENV_PATH = PROJECT_ROOT / ".env"
+
+
+def load_dotenv_if_present(path: Path = ENV_PATH) -> None:
+    """Zero-dependency .env loader. Existing env vars take precedence."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key, val = key.strip(), val.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = val
 
 # Built-in fallback so the layer works even without a yaml file / PyYAML.
 _BUILTIN = {
@@ -79,7 +95,8 @@ class LLMConfig:
 
 
 def load_config(path: Path = CONFIG_PATH) -> LLMConfig:
-    """Load models.yaml (or built-in fallback)."""
+    """Load models.yaml (or built-in fallback). Also loads .env if present."""
+    load_dotenv_if_present()
     raw = None
     try:
         import yaml  # type: ignore
