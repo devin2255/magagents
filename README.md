@@ -13,6 +13,8 @@ A Trump-style US Government-inspired AI multi-agent system with:
 ![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
+> 🌐 Language / 语言：**English** | [简体中文](README.zh-CN.md)
+
 ## 🎩 Features
 
 ### 🇺🇸 Three Branches of Government
