@@ -1,0 +1,8 @@
+# Optional dependencies for real LLM integration.
+#   pip install -r requirements-llm.txt
+# Core MAGAgents (simulation mode) needs none of these.
+
+openai>=1.0          # covers all OpenAI-compatible providers (DeepSeek/Qwen/Kimi/OpenRouter/local)
+anthropic>=0.39      # Claude (Anthropic Messages API)
+PyYAML>=6.0          # parse config/models.yaml
+python-dotenv>=1.0   # load .env (optional convenience)

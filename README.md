@@ -239,6 +239,36 @@ trumptopia-ai/
 └── README.md                 # This file
 ```
 
+## 🤖 Real LLM Mode (Optional, Pluggable)
+
+By default MAGAgents runs in **offline template mode** (no AI, no keys, deterministic).
+You can optionally plug in **real LLMs** — with a **different model per agent**
+(e.g. Claude for the President, DeepSeek for DOGE, Qwen for Congress).
+
+```bash
+# 1. Install optional deps
+pip install -r requirements-llm.txt
+
+# 2. Configure keys (only fill what you use)
+cp .env.example .env        # then edit .env
+export DEEPSEEK_API_KEY=sk-...   # or load .env via python-dotenv
+
+# 3. Run — agents now speak/decide via real models
+python demo.py
+```
+
+- **Per-agent models**: edit `config/models.yaml` (`agents:` section). Any agent
+  left out uses `default`.
+- **Providers**: DeepSeek, OpenAI, Qwen (DashScope), Kimi, OpenRouter, local
+  (Ollama/vLLM) via the OpenAI-compatible adapter; Anthropic (Claude) via its own.
+- **Override per run**: `MAGAGENTS_AGENT_TRUMP_PRESIDENT_MODEL=claude-sonnet-4-5`
+- **Force offline**: `MAGAGENTS_LLM_ENABLED=off`
+- **Graceful degradation**: if no key is set (or deps missing), MAGAgents
+  automatically falls back to template mode — `demo.py` and the test suite always work.
+- Real token usage flows into the system summary (`llm_usage`) and feeds DOGE audits.
+
+> 🔒 API keys are read from environment variables only and never committed (`.env` is gitignored).
+
 ## 🧪 Testing
 
 Run the comprehensive test suite:

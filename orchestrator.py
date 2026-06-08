@@ -16,6 +16,17 @@ from firing_mechanism import FiringMechanism, FiringCertificate
 from tariff_negotiator import TariffNegotiator, TradeOffer
 from scheduler import MAGAgentsScheduler
 
+# Optional LLM layer. Import is guarded so the core system runs with zero deps.
+try:
+    from llm import LLMClient, load_config
+    from llm import agent_runtime as _agent_runtime
+    _LLM_IMPORT_OK = True
+except Exception:  # pragma: no cover - missing optional deps
+    LLMClient = None
+    load_config = None
+    _agent_runtime = None
+    _LLM_IMPORT_OK = False
+
 
 class AgentState(Enum):
     """States in the MAGAgents system."""
@@ -220,6 +231,16 @@ class MAGAgentsOrchestrator:
         self.tariff = TariffNegotiator(self.doge)
         self.truth_social = TruthSocialAPI()
         
+        # Optional LLM client (pluggable per-agent models). Falls back to
+        # template/simulation mode when no API keys are configured.
+        self.llm = None
+        self.llm_usage = {"input_tokens": 0, "output_tokens": 0, "cost": 0.0}
+        if _LLM_IMPORT_OK:
+            try:
+                self.llm = LLMClient(load_config())
+            except Exception:
+                self.llm = None
+
         # Task storage
         self.tasks_file = self.data_dir / "tasks.json"
         self.tasks: Dict[str, Task] = {}
@@ -242,7 +263,30 @@ class MAGAgentsOrchestrator:
         data = {k: v.to_dict() for k, v in self.tasks.items()}
         self.tasks_file.write_text(json.dumps(data, indent=2))
     
-    def create_task(self, title: str, description: str = "", 
+    @property
+    def llm_enabled(self) -> bool:
+        return bool(self.llm and self.llm.enabled)
+
+    def _speak(self, agent_id: str, intent: str, context: str = "",
+               fallback: str = "") -> str:
+        """Return an in-character line: LLM-generated when available, else `fallback`.
+
+        Real LLM token usage is accumulated into self.llm_usage so later phases
+        can feed it to DOGE for genuine efficiency audits.
+        """
+        if not self.llm_enabled or _agent_runtime is None:
+            return fallback
+        text, in_tok, out_tok = _agent_runtime.say(self.llm, agent_id, intent, context)
+        if in_tok or out_tok:
+            self.llm_usage["input_tokens"] += in_tok
+            self.llm_usage["output_tokens"] += out_tok
+            try:
+                self.llm_usage["cost"] += self.llm.cost_of(agent_id, in_tok, out_tok)
+            except Exception:
+                pass
+        return text or fallback
+
+    def create_task(self, title: str, description: str = "",
                     priority: str = "normal") -> Task:
         """Create a new task."""
         task_id = f"TRUMP-{int(time.time())}-{len(self.tasks)}"
@@ -266,13 +310,17 @@ class MAGAgentsOrchestrator:
         self.tasks[task_id] = task
         self.save_tasks()
         
-        # Post to Truth Social
-        self.truth_social.post(
+        # Post to Truth Social (LLM-generated when enabled, else template)
+        fallback = f"New task created: {title}! TREMENDOUS opportunity!!!"
+        message = self._speak(
             "trump_president",
-            f"New task created: {title}! TREMENDOUS opportunity!!!",
-            trump_style=True
+            intent=f"A new task was just created: '{title}' (priority: {priority}).",
+            context=description,
+            fallback=fallback,
         )
-        
+        self.truth_social.post("trump_president", message,
+                               trump_style=not self.llm_enabled)
+
         return task
     
     def transition_state(self, task_id: str, new_state: AgentState,
@@ -322,11 +370,19 @@ class MAGAgentsOrchestrator:
             AgentState.FIRED: f"Someone's getting FIRED over this!!!",
         }
         
-        message = messages.get(task.state, f"Task {task.id} moved to {task.state.value}")
+        fallback = messages.get(task.state, f"Task {task.id} moved to {task.state.value}")
         if reason:
-            message += f" Reason: {reason}"
-        
-        self.truth_social.post("trump_president", message, trump_style=True)
+            fallback += f" Reason: {reason}"
+
+        message = self._speak(
+            "trump_president",
+            intent=f"Task '{task.title}' moved to stage '{task.state.value}'."
+                   + (f" Reason: {reason}." if reason else ""),
+            context=task.description,
+            fallback=fallback,
+        )
+        self.truth_social.post("trump_president", message,
+                               trump_style=not self.llm_enabled)
     
     def assign_to_agent(self, task_id: str, agent_id: str) -> bool:
         """Assign a task to a specific agent."""
@@ -391,11 +447,13 @@ class MAGAgentsOrchestrator:
         )
         
         # Post to Truth Social
-        self.truth_social.post(
+        message = self._speak(
             "trump_president",
-            TrumpStyleFormatter.format_firing(agent_id, reason),
-            trump_style=False  # Already formatted
+            intent=f"You are firing the '{agent_id}' agent. Reason: {reason}. "
+                   f"Their efficiency was {efficiency:.0f}%.",
+            fallback=TrumpStyleFormatter.format_firing(agent_id, reason),
         )
+        self.truth_social.post("trump_president", message, trump_style=False)
         
         # Update any tasks assigned to this agent
         for task in self.tasks.values():
@@ -408,13 +466,15 @@ class MAGAgentsOrchestrator:
     
     def veto_task(self, task_id: str, reason: str) -> bool:
         """Veto a task (POTUS power)."""
+        title = self.tasks[task_id].title if task_id in self.tasks else task_id
         success = self.transition_state(task_id, AgentState.VETOED, reason)
         if success:
-            self.truth_social.post(
+            message = self._speak(
                 "trump_president",
-                TrumpStyleFormatter.format_veto(self.tasks[task_id].title, reason),
-                trump_style=False
+                intent=f"You are VETOING the task '{title}'. Reason: {reason}.",
+                fallback=TrumpStyleFormatter.format_veto(title, reason),
             )
+            self.truth_social.post("trump_president", message, trump_style=False)
         return success
     
     def approve_task(self, task_id: str) -> bool:
@@ -425,14 +485,14 @@ class MAGAgentsOrchestrator:
         
         success = self.transition_state(task_id, AgentState.CABINET, "Presidential approval")
         if success:
-            self.truth_social.post(
+            agent = task.assigned_agent or "cabinet"
+            message = self._speak(
                 "trump_president",
-                TrumpStyleFormatter.format_approval(
-                    task.assigned_agent or "cabinet",
-                    task.title
-                ),
-                trump_style=False
+                intent=f"You APPROVE the task '{task.title}' and assign it to @{agent}.",
+                context=task.description,
+                fallback=TrumpStyleFormatter.format_approval(agent, task.title),
             )
+            self.truth_social.post("trump_president", message, trump_style=False)
         return success
     
     def get_doge_report(self) -> dict:
@@ -440,14 +500,15 @@ class MAGAgentsOrchestrator:
         report = self.doge.generate_daily_report()
         
         # Post summary to Truth Social
-        self.truth_social.post(
+        message = self._speak(
             "doge_musk",
-            TrumpStyleFormatter.format_doge_report(
-                report.total_waste,
-                report.agents_fired
-            ),
-            trump_style=False
+            intent=f"Deliver a DOGE efficiency report: ${report.total_waste:.2f} of waste "
+                   f"found, {report.agents_fired} agent(s) fired, "
+                   f"{report.agents_warned} warned.",
+            fallback=TrumpStyleFormatter.format_doge_report(
+                report.total_waste, report.agents_fired),
         )
+        self.truth_social.post("doge_musk", message, trump_style=False)
         
         return asdict(report)
     
@@ -471,6 +532,8 @@ class MAGAgentsOrchestrator:
             "doge_summary": self.doge.get_summary(),
             "firing_stats": self.firing.get_firing_stats(),
             "truth_social_posts": len(self.truth_social.posts),
+            "llm_enabled": self.llm_enabled,
+            "llm_usage": dict(self.llm_usage),
             "timestamp": datetime.now().isoformat()
         }
     

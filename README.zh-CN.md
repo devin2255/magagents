@@ -243,6 +243,34 @@ trumptopia-ai/
 └── README.zh-CN.md            # 本文件
 ```
 
+## 🤖 真实 LLM 模式（可选、可插拔）
+
+默认情况下 MAGAgents 跑在**离线模板模式**（无 AI、无需 key、结果确定）。
+你可以选择接入**真实大模型**，而且**每个角色能用不同的模型**
+（比如总统用 Claude、DOGE 用 DeepSeek、国会用 Qwen）。
+
+```bash
+# 1. 安装可选依赖
+pip install -r requirements-llm.txt
+
+# 2. 配置 key（只填你要用的）
+cp .env.example .env        # 然后编辑 .env
+export DEEPSEEK_API_KEY=sk-...
+
+# 3. 运行 —— 角色现在用真模型说话/决策
+python demo.py
+```
+
+- **每角色模型**：改 `config/models.yaml` 的 `agents:` 段；没列的角色走 `default`。
+- **支持厂商**：DeepSeek、OpenAI、通义千问 Qwen(DashScope)、Kimi、OpenRouter、本地
+  (Ollama/vLLM) 走 OpenAI 兼容适配器；Claude 走 Anthropic 适配器。
+- **临时覆盖**：`MAGAGENTS_AGENT_TRUMP_PRESIDENT_MODEL=claude-sonnet-4-5`
+- **强制离线**：`MAGAGENTS_LLM_ENABLED=off`
+- **优雅降级**：没配 key（或没装依赖）时自动回退模板模式 —— `demo.py` 和测试永远能跑。
+- 真实 token 用量会进入系统摘要（`llm_usage`）并喂给 DOGE 审计。
+
+> 🔒 API Key 只从环境变量读取，绝不提交（`.env` 已加入 .gitignore）。
+
 ## 🧪 测试
 
 运行完整测试套件：

@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 *.tmp
 *.lock
+
+# Secrets / local env
+.env
+.env.local

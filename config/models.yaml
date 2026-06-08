@@ -1,0 +1,63 @@
+# MAGAgents - LLM Model Configuration
+# Per-agent pluggable models. API keys are read from env vars (never stored here).
+#
+# Precedence (high -> low):
+#   1. env override: MAGAGENTS_AGENT_<AGENT_ID>_MODEL / _PROVIDER
+#   2. agents.<id> below
+#   3. default below
+
+# Global toggle: auto (use LLM if keys present) | on (require keys) | off (force template mode)
+enabled: auto
+
+# Fallback used by any agent without an explicit entry under `agents:`
+default:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.8
+  max_tokens: 1024
+
+# Provider definitions. `type` selects the adapter:
+#   - openai_compat : OpenAI-compatible Chat Completions (DeepSeek/Qwen/Kimi/OpenRouter/OpenAI/local)
+#   - anthropic     : Anthropic Messages API (Claude)
+providers:
+  deepseek:
+    type: openai_compat
+    base_url: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    price_per_1k: { input: 0.00014, output: 0.00028 }
+  openai:
+    type: openai_compat
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    price_per_1k: { input: 0.0005, output: 0.0015 }
+  qwen:
+    type: openai_compat
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key_env: DASHSCOPE_API_KEY
+    price_per_1k: { input: 0.0004, output: 0.0012 }
+  kimi:
+    type: openai_compat
+    base_url: https://api.moonshot.cn/v1
+    api_key_env: MOONSHOT_API_KEY
+    price_per_1k: { input: 0.0017, output: 0.0017 }
+  openrouter:
+    type: openai_compat
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+  local:                                   # Ollama / vLLM / LM Studio
+    type: openai_compat
+    base_url: http://localhost:11434/v1
+    api_key_env: LOCAL_API_KEY             # any non-empty value for local servers
+  anthropic:
+    type: anthropic
+    api_key_env: ANTHROPIC_API_KEY
+    price_per_1k: { input: 0.003, output: 0.015 }
+
+# Per-agent model assignment. Agents not listed here fall back to `default`.
+agents:
+  trump_president:  { provider: deepseek, model: deepseek-chat, temperature: 1.0 }
+  doge_musk:        { provider: deepseek, model: deepseek-chat, temperature: 0.5 }
+  scotus:           { provider: deepseek, model: deepseek-chat, temperature: 0.3 }
+  congress_senate:  { provider: deepseek, model: deepseek-chat }
+  congress_house:   { provider: deepseek, model: deepseek-chat }
+  # Cabinet (state_dept/treasury/defense/commerce/energy/justice) -> default
