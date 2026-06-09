@@ -32,16 +32,23 @@ class C:
     BLUE = "\033[34m"; MAGENTA = "\033[35m"; CYAN = "\033[36m"; GOLD = "\033[93m"
 
 STAGE = {
-    "congress": ("🏛️", "国会 / Congress", C.CYAN),
-    "scotus":   ("⚖️", "最高法院 / SCOTUS", C.MAGENTA),
-    "potus":    ("🎩", "总统 / POTUS", C.GOLD),
-    "cabinet":  ("🏢", "内阁 / Cabinet", C.BLUE),
-    "doge":     ("🐕", "DOGE 审计", C.YELLOW),
+    "house":           ("🏛️", "众议院 / House", C.CYAN),
+    "senate":          ("🏛️", "参议院 / Senate", C.CYAN),
+    "congress":        ("🏛️", "国会 / Congress", C.CYAN),
+    "potus":           ("🎩", "总统 / POTUS", C.GOLD),
+    "override_house":  ("🔁", "众议院反否决 / House override", C.MAGENTA),
+    "override_senate": ("🔁", "参议院反否决 / Senate override", C.MAGENTA),
+    "override":        ("⚖️", "国会推翻否决 / Veto overridden", C.GREEN),
+    "cabinet":         ("🏢", "内阁 / Cabinet", C.BLUE),
+    "scotus":          ("⚖️", "最高法院违宪审查 / Judicial review", C.MAGENTA),
+    "doge":            ("🐕", "DOGE 审计", C.YELLOW),
 }
 OUTCOME = {
     "done": (C.GREEN, "✅ 完成 DONE"),
     "fired": (C.RED, "🔥 已解雇 FIRED"),
-    "vetoed": (C.RED, "❌ 已否决 VETOED"),
+    "vetoed": (C.RED, "❌ 已否决 VETOED（反否决失败）"),
+    "congress_failed": (C.RED, "🏛️ 国会未通过 CONGRESS FAILED"),
+    "struck_down": (C.RED, "⚖️ 判违宪作废 STRUCK DOWN"),
     "blocked": (C.YELLOW, "🚫 已驳回 BLOCKED"),
     "over_budget": (C.YELLOW, "💸 超预算 OVER BUDGET"),
 }
@@ -51,7 +58,8 @@ def print_step(step):
     """run_task_agentic 的逐步回调：实时打印每个角色的决策。"""
     icon, label, color = STAGE.get(step.get("stage"), ("•", step.get("stage", "?"), C.R))
     verdict = (step.get("vote") or step.get("decision") or step.get("ruling")
-               or step.get("verdict") or ("已执行" if step.get("output_preview") else ""))
+               or step.get("verdict") or step.get("result")
+               or ("已执行" if step.get("output_preview") else ""))
     reason = step.get("reason") or step.get("output_preview") or ""
     eff = f"  ({step['efficiency']:.0f}% 效率)" if step.get("efficiency") is not None else ""
     print(f"  {icon} {color}{C.B}{label}{C.R} "

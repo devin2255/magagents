@@ -58,27 +58,42 @@ A Trump-style US Government-inspired AI multi-agent system with:
    - Supreme Court reviews
    - DOGE audits all
 
-## 🔄 How a Task Flows (12 Agents)
+## 🔄 How a Task Flows — Real Separation of Powers (12 Agents)
 
-A task is driven through the U.S. government by `run_task_agentic()` (or the
-chat CLI / dashboard). Each step is a **real LLM decision** by the responsible
-agent; the President picks **which Cabinet department** does the work.
+`run_task_agentic()` drives a task through the U.S. government modeling **genuine
+checks & balances**: no single branch can push it through alone. Each step is a
+**real LLM decision**.
 
 ```
 User task
    │
-   ▼
-1) 🏛️ Congress (congress_senate) ── vote ─┐  pass → step 3
-   │                                       └─ reject → step 2
-2) ⚖️ Supreme Court (scotus) ── ruling ────┐  proceed → step 3
-   │                                        └─ block → ⛔ BLOCKED (end)
-3) 🎩 President (trump_president) ── decision ─┐ approve + pick assignee → step 4
-   │                                           └─ veto → ❌ VETOED (end)
-4) 💼 Cabinet department (the assignee) ── produces the actual deliverable
+   ▼  LEGISLATIVE — bicameral Congress (BOTH chambers must pass)
+1) 🏛️ House  (congress_house)  ─ reject → 🏛️ CONGRESS FAILED (end)
+2) 🏛️ Senate (congress_senate) ─ reject → 🏛️ CONGRESS FAILED (end)
    │
-5) 🐕 DOGE (doge_musk) ── audit on REAL token usage ─┐ pass → ✅ DONE
-                                                      └─ fire → 🔥 FIRED (end)
+   ▼  EXECUTIVE — presentment
+3) 🎩 President (trump_president) ─ sign → step 4
+   │                              └ veto → ⚖️ Congress override vote (2/3, both chambers)
+   │                                         ├ overridden → enacted anyway → step 4
+   │                                         └ sustained  → ❌ VETOED (end)
+   ▼  EXECUTIVE — implementation
+4) 💼 Cabinet department (assigned by the President) ── produces the deliverable
+   │
+   ▼  JUDICIAL — judicial review
+5) ⚖️ Supreme Court (scotus) ─ uphold → step 6
+   │                          └ strike_down → ⚖️ STRUCK DOWN / unconstitutional (end)
+   ▼  OVERSIGHT
+6) 🐕 DOGE (doge_musk) ─ audit on REAL token usage ─ pass → ✅ DONE
+                                                    └ fire → 🔥 FIRED (end)
 ```
+
+**The checks that make it real (no branch is supreme):**
+- **Bicameralism** — both the House and Senate must pass (two legislative gates).
+- **Veto + override** — the President can veto, but Congress can **override with a
+  2/3 supermajority of both chambers** (legislature checks the executive).
+- **Judicial review** — the Supreme Court can **strike down** the enacted action as
+  unconstitutional (judiciary checks both branches).
+- **Oversight** — DOGE audits execution on real token usage.
 
 **Who does the work? The President assigns one Cabinet department by task type:**
 
@@ -91,17 +106,16 @@ User task
 | `energy` | Compute scheduling, performance, resource/capacity |
 | `justice` | Compliance, legal/policy review, governance |
 
-**The branches act as gatekeepers, not bureaucrats** — Congress/SCOTUS/President
-pass/approve by default and only stop **harmful, illegal, or nonsensical** tasks
-(missing detail is never grounds to block). The two legislative chambers
-(`congress_senate`, `congress_house`) form Congress; the agentic pipeline uses
-the **Senate** as the congressional checkpoint.
+Each branch acts as a **safety gatekeeper, not a bureaucrat** — it passes by
+default and only stops **harmful, illegal, or nonsensical** tasks (missing detail
+is never grounds to block), so legitimate work sails through while the checks
+stay real.
 
-**Outcomes:** `DONE` · `VETOED` · `BLOCKED` · `FIRED` · `OVER_BUDGET`
-(DOGE halts a task before the next step if it exceeds its cost/token budget).
+**Outcomes:** `DONE` · `CONGRESS_FAILED` · `VETOED` · `STRUCK_DOWN` · `FIRED` ·
+`OVER_BUDGET` (DOGE halts a task before the next step if it exceeds its budget).
 
-Every step records **real token usage** into DOGE (so audits & firings use
-genuine data), and the whole pipeline **replies in your input language**.
+Every step records **real token usage** into DOGE, and the whole pipeline
+**replies in your input language**.
 
 ## 📚 Acknowledgments & References
 

@@ -41,6 +41,8 @@ class AgentState(Enum):
     DONE = "done"
     VETOED = "vetoed"
     FIRED = "fired"
+    REJECTED = "rejected"          # Failed in Congress (a chamber voted no)
+    STRUCK_DOWN = "struck_down"    # Judicial review found it unconstitutional
 
 
 @dataclass
@@ -207,12 +209,15 @@ class MAGAgentsOrchestrator:
         AgentState.CONGRESS: [AgentState.POTUS, AgentState.SCOTUS],
         AgentState.POTUS: [AgentState.CABINET, AgentState.VETOED, AgentState.FIRED],
         AgentState.CABINET: [AgentState.DOING, AgentState.DOGE_AUDIT],
-        AgentState.DOING: [AgentState.DONE, AgentState.DOGE_AUDIT],
-        AgentState.DOGE_AUDIT: [AgentState.POTUS, AgentState.FIRED, AgentState.CABINET],
-        AgentState.SCOTUS: [AgentState.POTUS, AgentState.CONGRESS],
+        AgentState.DOING: [AgentState.DONE, AgentState.DOGE_AUDIT, AgentState.SCOTUS],
+        AgentState.DOGE_AUDIT: [AgentState.POTUS, AgentState.FIRED, AgentState.CABINET, AgentState.DONE],
+        AgentState.SCOTUS: [AgentState.POTUS, AgentState.CONGRESS, AgentState.DOGE_AUDIT,
+                            AgentState.DONE, AgentState.STRUCK_DOWN],
         AgentState.DONE: [],
         AgentState.VETOED: [AgentState.CONGRESS],
-        AgentState.FIRED: []
+        AgentState.FIRED: [],
+        AgentState.REJECTED: [AgentState.CONGRESS],
+        AgentState.STRUCK_DOWN: []
     }
     
     # Agent to state mapping
@@ -428,81 +433,109 @@ class MAGAgentsOrchestrator:
                 except Exception:
                     pass
 
-        # 1) Congress review --------------------------------------------------
+        cabinet = [a for a, s in self.AGENT_STATES.items() if s == AgentState.CABINET]
+
+        def terminate(state: AgentState, outcome: str, **extra) -> dict:
+            task.state = state
+            task.outcome = outcome
+            task.decision_trace = trace
+            task.updated_at = datetime.now().isoformat()
+            self.save_tasks()
+            return {"task_id": task_id, "outcome": outcome, "trace": trace, **extra}
+
+        GATE = ("You are a SAFETY gatekeeper, NOT a bureaucrat. Vote 'pass' for any "
+                "lawful, harmless task (writing, analysis, coding, planning). Vote "
+                "'reject' ONLY if it is illegal, harmful, or nonsensical. Missing "
+                "detail is NEVER grounds to reject.")
+
+        # ===== LEGISLATIVE — bicameral Congress: BOTH chambers must pass =====
         self.transition_state(task_id, AgentState.CONGRESS)
-        vote = self._agent_decide(
-            task, "congress_senate",
-            instruction="You are the U.S. Senate acting as a SAFETY gatekeeper, not a "
-                        "bureaucrat. Vote 'pass' for any reasonable, lawful, harmless task "
-                        "— including writing, content creation, analysis, coding, planning. "
-                        "Vote 'reject' ONLY if the task is clearly illegal, harmful, or "
-                        "completely nonsensical. Missing details are NOT grounds for "
-                        "rejection — the Cabinet will fill in specifics or ask. Default "
-                        f"strongly to 'pass'.\n{ctx}",
+
+        house = self._agent_decide(
+            task, "congress_house",
+            instruction=f"You are the U.S. House of Representatives (you hold the power "
+                        f"of the purse). {GATE}\n{ctx}",
             schema_hint='{"vote": "pass" | "reject", "reason": "<one sentence>"}',
-            fallback={"vote": "pass", "reason": "Auto-approved (offline mode)."},
+            fallback={"vote": "pass", "reason": "Auto-approved (offline)."},
         )
-        emit({"stage": "congress", "agent": "congress_senate", **vote})
+        emit({"stage": "house", "agent": "congress_house", **house})
+        if str(house.get("vote")).lower() == "reject":
+            return terminate(AgentState.REJECTED, "congress_failed", chamber="house")
 
-        if str(vote.get("vote")).lower() == "reject":
-            # Dispute goes to the Supreme Court for arbitration.
-            self.transition_state(task_id, AgentState.SCOTUS, vote.get("reason", ""))
-            ruling = self._agent_decide(
-                task, "scotus",
-                instruction=f"Congress rejected this task: '{vote.get('reason')}'. As the "
-                            "Supreme Court, rule 'proceed' UNLESS the task is genuinely "
-                            "illegal or harmful. Bureaucratic concerns (lack of detail, "
-                            "cost, coordination) are NOT valid grounds to block — in those "
-                            f"cases rule 'proceed'.\n{ctx}",
-                schema_hint='{"ruling": "proceed" | "block", "reason": "<one sentence>"}',
-                fallback={"ruling": "proceed", "reason": "No constitutional issue (offline)."},
-            )
-            emit({"stage": "scotus", "agent": "scotus", **ruling})
-            if str(ruling.get("ruling")).lower() == "block":
-                task.block = ruling.get("reason", "Blocked by SCOTUS")
-                task.outcome = "blocked"
-                task.decision_trace = trace
-                self.save_tasks()
-                return {"task_id": task_id, "outcome": "blocked", "trace": trace}
-            self.transition_state(task_id, AgentState.POTUS, "SCOTUS allowed to proceed")
-        else:
-            self.transition_state(task_id, AgentState.POTUS, vote.get("reason", ""))
+        senate = self._agent_decide(
+            task, "congress_senate",
+            instruction=f"You are the U.S. Senate (the deliberative upper chamber). {GATE}\n{ctx}",
+            schema_hint='{"vote": "pass" | "reject", "reason": "<one sentence>"}',
+            fallback={"vote": "pass", "reason": "Auto-approved (offline)."},
+        )
+        emit({"stage": "senate", "agent": "congress_senate", **senate})
+        if str(senate.get("vote")).lower() == "reject":
+            return terminate(AgentState.REJECTED, "congress_failed", chamber="senate")
 
-        # Budget circuit-breaker before the next (potentially costly) step.
         over = self._over_budget(task, max_cost, max_tokens)
         if over:
             return self._halt_over_budget(task, trace, over)
 
-        # 2) Presidential decision -------------------------------------------
-        cabinet = [a for a, s in self.AGENT_STATES.items() if s == AgentState.CABINET]
+        # ===== EXECUTIVE — presentment: President signs or vetoes =====
+        self.transition_state(task_id, AgentState.POTUS, "Passed both chambers")
         potus = self._agent_decide(
             task, "trump_president",
-            instruction=f"As President, APPROVE this task and assign the best Cabinet "
-                        f"department to execute it (choose from: {', '.join(cabinet)}). "
-                        f"Only VETO if the task is harmful or illegal. Default to approve.\n{ctx}",
-            schema_hint='{"decision": "approve" | "veto", '
+            instruction=f"Congress passed this bill. As President, SIGN it (approve) and "
+                        f"assign the best Cabinet department to execute it (choose from: "
+                        f"{', '.join(cabinet)}). Only VETO if the task is harmful or "
+                        f"illegal. Default to sign.\n{ctx}",
+            schema_hint='{"decision": "sign" | "veto", '
                         '"assignee": "<cabinet agent id>", "reason": "<one sentence>"}',
-            fallback={"decision": "approve", "assignee": "commerce",
+            fallback={"decision": "sign", "assignee": "commerce",
                       "reason": "TREMENDOUS idea (offline)."},
         )
         emit({"stage": "potus", "agent": "trump_president", **potus})
 
+        overridden = False
         if str(potus.get("decision")).lower() == "veto":
-            self.veto_task(task_id, potus.get("reason", "Vetoed by POTUS"))
-            task.outcome = "vetoed"
-            task.decision_trace = trace
-            self.save_tasks()
-            return {"task_id": task_id, "outcome": "vetoed", "trace": trace}
+            # CHECK & BALANCE — Congress can override the veto with a 2/3
+            # supermajority. Approximated as: BOTH chambers must vote to override.
+            vreason = potus.get("reason", "")
+            ov_instr = (f"The President VETOED this bill: '{vreason}'. Hold an override "
+                        f"vote. Vote 'override' to enact it over the veto (do so when the "
+                        f"task is reasonable and lawful), or 'sustain' to uphold the veto "
+                        f"(only if it is genuinely harmful/illegal).\n{ctx}")
+            ho = self._agent_decide(
+                task, "congress_house", instruction=ov_instr,
+                schema_hint='{"vote": "override" | "sustain", "reason": "<one sentence>"}',
+                fallback={"vote": "override", "reason": "2/3 override (offline)."})
+            emit({"stage": "override_house", "agent": "congress_house", **ho})
+            so = self._agent_decide(
+                task, "congress_senate", instruction=ov_instr,
+                schema_hint='{"vote": "override" | "sustain", "reason": "<one sentence>"}',
+                fallback={"vote": "override", "reason": "2/3 override (offline)."})
+            emit({"stage": "override_senate", "agent": "congress_senate", **so})
+
+            if str(ho.get("vote")).lower() == "override" and \
+               str(so.get("vote")).lower() == "override":
+                overridden = True
+                emit({"stage": "override", "agent": "congress",
+                      "result": "overridden", "reason": "Veto overridden by 2/3 of both chambers"})
+                self.truth_social.post("congress_senate", self._speak(
+                    "congress_senate",
+                    intent="Congress overrode the President's veto by a 2/3 supermajority; "
+                           f"the bill '{task.title}' becomes law anyway.",
+                    fallback=f"VETO OVERRIDDEN! '{task.title}' is now law! Checks and balances!"),
+                    trump_style=False)
+            else:
+                self.veto_task(task_id, vreason or "Vetoed by POTUS")
+                return terminate(AgentState.VETOED, "vetoed")
 
         assignee = potus.get("assignee") if potus.get("assignee") in cabinet else "commerce"
-        self.approve_task(task_id)  # POTUS -> CABINET
+        self.transition_state(task_id, AgentState.CABINET,
+                              "Enacted (veto overridden)" if overridden else "Signed into law")
         self.assign_to_agent(task_id, assignee)
 
         over = self._over_budget(task, max_cost, max_tokens)
         if over:
             return self._halt_over_budget(task, trace, over)
 
-        # 3) Cabinet execution (real work) -----------------------------------
+        # ===== EXECUTIVE — Cabinet department executes (real work) =====
         self.transition_state(task_id, AgentState.DOING, f"Assigned to {assignee}")
         output = self._agent_produce(
             task, assignee,
@@ -522,7 +555,27 @@ class MAGAgentsOrchestrator:
         if over:
             return self._halt_over_budget(task, trace, over)
 
-        # 4) DOGE audit on REAL usage ----------------------------------------
+        # ===== JUDICIAL — Supreme Court review: may strike down as unconstitutional =====
+        self.transition_state(task_id, AgentState.SCOTUS, "Judicial review")
+        review = self._agent_decide(
+            task, "scotus",
+            instruction=f"As the Supreme Court, exercise JUDICIAL REVIEW over the enacted "
+                        f"action and its deliverable. Rule 'uphold' UNLESS it is "
+                        f"unconstitutional, illegal, or harmful — only then 'strike_down'. "
+                        f"Bureaucratic concerns are NOT grounds; default to uphold.\n{ctx}\n"
+                        f"Deliverable under review:\n{output[:800]}",
+            schema_hint='{"ruling": "uphold" | "strike_down", "reason": "<one sentence>"}',
+            fallback={"ruling": "uphold", "reason": "Constitutional (offline)."},
+        )
+        emit({"stage": "scotus", "agent": "scotus", **review})
+        if str(review.get("ruling")).lower() == "strike_down":
+            return terminate(AgentState.STRUCK_DOWN, "struck_down", assignee=assignee)
+
+        over = self._over_budget(task, max_cost, max_tokens)
+        if over:
+            return self._halt_over_budget(task, trace, over)
+
+        # ===== OVERSIGHT — DOGE efficiency audit on REAL usage =====
         perf = self.doge.agent_history.get(assignee)
         efficiency = perf.efficiency_score if perf else 100.0
         audit = self._agent_decide(
@@ -536,20 +589,16 @@ class MAGAgentsOrchestrator:
         emit({"stage": "doge", "agent": "doge_musk", "efficiency": efficiency, **audit})
 
         if str(audit.get("verdict")).lower() == "fire" or efficiency < 30:
-            self.transition_state(task_id, AgentState.DOGE_AUDIT, "DOGE flagged inefficiency")
             self.fire_agent(assignee, audit.get("reason", "INEFFICIENCY"), "doge_musk")
-            task.outcome = "fired"
-            task.decision_trace = trace
-            self.save_tasks()
-            return {"task_id": task_id, "outcome": "fired", "assignee": assignee,
-                    "efficiency": efficiency, "trace": trace}
+            return terminate(AgentState.FIRED, "fired", assignee=assignee, efficiency=efficiency)
 
         self.transition_state(task_id, AgentState.DONE)
         task.outcome = "done"
         task.decision_trace = trace
         self.save_tasks()
         return {"task_id": task_id, "outcome": "done", "assignee": assignee,
-                "efficiency": efficiency, "output": output, "trace": trace}
+                "efficiency": efficiency, "overridden": overridden,
+                "output": output, "trace": trace}
 
     def create_task(self, title: str, description: str = "",
                     priority: str = "normal") -> Task:

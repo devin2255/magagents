@@ -1,9 +1,20 @@
 // MAGAgents 看板 — 椭圆形办公室指挥中心
 
 const PRIORITY_CN = { critical: '紧急', high: '高', normal: '普通', low: '低' };
-const STAGE_CN = { congress: '国会', scotus: '最高法院', potus: '总统', cabinet: '内阁', doge: 'DOGE' };
-const STAGE_ICON = { congress: '🏛️', scotus: '⚖️', potus: '🎩', cabinet: '🏢', doge: '🐕' };
-const OUTCOME_CN = { done: '已完成', fired: '已解雇', vetoed: '已否决', blocked: '已驳回', over_budget: '超预算' };
+const STAGE_CN = {
+    house: '众议院', senate: '参议院', congress: '国会', potus: '总统',
+    override_house: '众议院反否决', override_senate: '参议院反否决', override: '推翻否决',
+    cabinet: '内阁', scotus: '最高法院(违宪审查)', doge: 'DOGE'
+};
+const STAGE_ICON = {
+    house: '🏛️', senate: '🏛️', congress: '🏛️', potus: '🎩',
+    override_house: '🔁', override_senate: '🔁', override: '⚖️',
+    cabinet: '🏢', scotus: '⚖️', doge: '🐕'
+};
+const OUTCOME_CN = {
+    done: '已完成', fired: '已解雇', vetoed: '已否决', congress_failed: '国会未通过',
+    struck_down: '判违宪作废', blocked: '已驳回', over_budget: '超预算'
+};
 
 class MAGAgentsDashboard {
     constructor() {
@@ -240,7 +251,7 @@ class MAGAgentsDashboard {
         let traceHtml = '';
         if (trace.length) {
             const rows = trace.map(s => {
-                const verdict = s.vote || s.decision || s.ruling || s.verdict || (s.output_preview ? '已执行' : '');
+                const verdict = s.vote || s.decision || s.ruling || s.verdict || s.result || (s.output_preview ? '已执行' : '');
                 const detail = s.reason || s.output_preview || '';
                 const eff = (s.efficiency != null) ? ` · 效率 ${Number(s.efficiency).toFixed(0)}%` : '';
                 return `<div class="trace-step">
