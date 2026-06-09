@@ -58,6 +58,51 @@ A Trump-style US Government-inspired AI multi-agent system with:
    - Supreme Court reviews
    - DOGE audits all
 
+## 🔄 How a Task Flows (12 Agents)
+
+A task is driven through the U.S. government by `run_task_agentic()` (or the
+chat CLI / dashboard). Each step is a **real LLM decision** by the responsible
+agent; the President picks **which Cabinet department** does the work.
+
+```
+User task
+   │
+   ▼
+1) 🏛️ Congress (congress_senate) ── vote ─┐  pass → step 3
+   │                                       └─ reject → step 2
+2) ⚖️ Supreme Court (scotus) ── ruling ────┐  proceed → step 3
+   │                                        └─ block → ⛔ BLOCKED (end)
+3) 🎩 President (trump_president) ── decision ─┐ approve + pick assignee → step 4
+   │                                           └─ veto → ❌ VETOED (end)
+4) 💼 Cabinet department (the assignee) ── produces the actual deliverable
+   │
+5) 🐕 DOGE (doge_musk) ── audit on REAL token usage ─┐ pass → ✅ DONE
+                                                      └─ fire → 🔥 FIRED (end)
+```
+
+**Who does the work? The President assigns one Cabinet department by task type:**
+
+| Department | Best for |
+|---|---|
+| `commerce` | Writing, content, marketing, data/market analysis *(default)* |
+| `treasury` | Budgets, cost/ROI, financial calculations |
+| `defense` | Security, risk, attack/defense, hardening |
+| `state_dept` | External comms, partnerships, API/integration |
+| `energy` | Compute scheduling, performance, resource/capacity |
+| `justice` | Compliance, legal/policy review, governance |
+
+**The branches act as gatekeepers, not bureaucrats** — Congress/SCOTUS/President
+pass/approve by default and only stop **harmful, illegal, or nonsensical** tasks
+(missing detail is never grounds to block). The two legislative chambers
+(`congress_senate`, `congress_house`) form Congress; the agentic pipeline uses
+the **Senate** as the congressional checkpoint.
+
+**Outcomes:** `DONE` · `VETOED` · `BLOCKED` · `FIRED` · `OVER_BUDGET`
+(DOGE halts a task before the next step if it exceeds its cost/token budget).
+
+Every step records **real token usage** into DOGE (so audits & firings use
+genuine data), and the whole pipeline **replies in your input language**.
+
 ## 📚 Acknowledgments & References
 
 This project is inspired by and references the following open-source projects:
