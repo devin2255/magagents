@@ -1,7 +1,7 @@
 # MAGAgents · OpenClaw 原生包 — 安装指南
 
 把 MAGAgents 作为**纯 OpenClaw agent 包**运行：12 个政府角色都是 OpenClaw 原生
-agent，群里 @ 太子总机 即可下令，三权分立流程由 agent 间消息流转完成。
+agent，群里 @ 白宫办公厅主任 即可下令，三权分立流程由 agent 间消息流转完成。
 
 > ⚠️ OpenClaw 是外部运行时，需在你本机安装。本包提供全部 agent / 配置 / 脚本；
 > 具体 CLI 与 `openclaw.json` 键名以你安装的 OpenClaw 版本官方文档为准。
@@ -28,24 +28,24 @@ bash openclaw-pack/install.sh
 # Windows PowerShell
 powershell -ExecutionPolicy Bypass -File openclaw-pack\install.ps1
 ```
-脚本会 `openclaw agents add` 注册 intake + 11 个角色（已存在则跳过，不覆盖你现有 agent）。
+脚本会 `openclaw agents add` 注册 chief_of_staff + 11 个角色（已存在则跳过，不覆盖你现有 agent）。
 `openclaw agents list` 应能看到这 12 个。
 
 ### 3. 合并 bindings / mcpServers 到主配置
-把 `openclaw-pack/openclaw.json` 里的 `bindings`（频道路由到 intake）和
+把 `openclaw-pack/openclaw.json` 里的 `bindings`（频道路由到 chief_of_staff）和
 `mcpServers.doge`（可选 DOGE 工具）合并进你的 `~/.openclaw/openclaw.json`。
 （手动合并，或用 `jq` 安全 merge，**不要整体覆盖**你的主配置。）
 
 ### 4. 配置聊天频道
 按 OpenClaw 文档接入一个频道（最快是 Discord Bot Token；国内用飞书 App ID/Secret）。
-`bindings` 已把该频道的入站消息默认路由到 `intake`。
+`bindings` 已把该频道的入站消息默认路由到 `chief_of_staff`。
 
 ### 5. 启动
 ```bash
 openclaw gateway start
 ```
-在群里：`@太子总机 写一篇公众号推文宣传 MAGAgents，面向开发者`
-→ intake 会依次咨询 参议院→总统→内阁→DOGE，最后把完整推文回复到群里。
+在群里：`@白宫办公厅主任 写一篇公众号推文宣传 MAGAgents，面向开发者`
+→ chief_of_staff 会依次咨询 参议院→总统→内阁→DOGE，最后把完整推文回复到群里。
 
 ---
 

@@ -7,8 +7,8 @@ defaults:
   temperature: 0.8
 
 agents:
-  - id: intake
-    name: 太子总机
+  - id: chief_of_staff
+    name: 白宫办公厅主任
     role: 协调者 / 接收用户消息并驱动宪法流程
   - id: trump_president
     name: 总统
@@ -51,8 +51,8 @@ agents:
     name: 司法部
     role: 合规 / 法律审查
 
-# 频道绑定：默认所有入站消息进 intake
+# 频道绑定：默认所有入站消息进 chief_of_staff
 bindings:
-  - { agent: intake, channel: feishu }
-  - { agent: intake, channel: discord }
-  - { agent: intake, channel: telegram }
+  - { agent: chief_of_staff, channel: feishu }
+  - { agent: chief_of_staff, channel: discord }
+  - { agent: chief_of_staff, channel: telegram }

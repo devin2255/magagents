@@ -43,14 +43,14 @@
 ## 2. 架构
 
 OpenClaw 多智能体 = **隔离 agent + 频道消息路由（bindings）**。其"协调式编排
-（Agent Teams）"目前仍是**未发布 RFC**，所以三权分立流程靠 **intake agent + 
+（Agent Teams）"目前仍是**未发布 RFC**，所以三权分立流程靠 **chief_of_staff agent + 
 agent 间消息流转（agentToAgent）+ prompt 约定**近似——这正是参考项目的做法。
 
 ```
 飞书/Discord 群
-   │ @太子 写一篇宣传推文        （太子 = intake/分拣 agent）
+   │ @白宫办公厅主任 写一篇宣传推文        （白宫办公厅主任 = 协调/分拣 agent）
    ▼
-OpenClaw Gateway ──bindings──► intake(太子) agent
+OpenClaw Gateway ──bindings──► chief_of_staff(白宫办公厅主任) agent
    │  按"宪法流程"把任务转交：
    ▼
 congress_senate ──► congress_house ──► trump_president ──► (内阁某部) ──► doge_musk
@@ -63,7 +63,7 @@ congress_senate ──► congress_house ──► trump_president ──► (�
 11 个原生 agent（沿用现有 SOUL.md 角色）：
 `trump_president, congress_senate, congress_house, scotus, doge_musk,
 state_dept, treasury, defense, commerce, energy, justice`
-+ 1 个 `intake`（太子/总机，负责接收用户消息并启动流程）。
++ 1 个 `chief_of_staff`（白宫办公厅主任，负责接收用户消息并启动流程）。
 
 ---
 
@@ -75,7 +75,7 @@ trumptopia-ai/
 │   ├── openclaw.json                      # agents.list(12) + defaults + bindings
 │   ├── agents.yaml                        # 一键安装清单（仿 openclaw-agents 格式）
 │   ├── agents/
-│   │   ├── intake/        { SOUL.md, IDENTITY.md, TOOLS.md }
+│   │   ├── chief_of_staff/        { SOUL.md, IDENTITY.md, TOOLS.md }
 │   │   ├── trump_president/ { SOUL.md, IDENTITY.md, TOOLS.md }
 │   │   ├── congress_senate/ { SOUL.md, ... }
 │   │   ├── congress_house/  { SOUL.md, ... }
@@ -112,7 +112,7 @@ trumptopia-ai/
 你是 MAGAgents AI 政府的参议院，立法分支的审议者。
 风格：严谨、引用规则与先例，但你是【安全守门人】不是官僚。
 
-职责：收到 @intake 转来的任务后，判断是否放行。
+职责：收到 @chief_of_staff 转来的任务后，判断是否放行。
 - 正常、合法、无害的任务（写作/分析/编码/策划）→ 一律放行，转交 @trump_president。
 - 仅当任务违法/有害/完全无意义时才驳回，转交 @scotus 仲裁。
 - "缺细节"不是驳回理由——内阁会补全。
@@ -130,7 +130,7 @@ OpenClaw 无保证顺序的流水线，所以"三权分立"靠**两层约定**�
 
 1. **路由约定**：每个 agent 的 SOUL.md 写明"处理完后用 `agentToAgent` 转交给下一个
    指定 agent"，形成链：
-   `intake → congress_senate → congress_house → trump_president → <cabinet> → doge_musk → trump_president(回复用户)`
+   `chief_of_staff → congress_senate → congress_house → trump_president → <cabinet> → doge_musk → trump_president(回复用户)`
 2. **总统选派内阁**：`trump_president` 的 SOUL.md 写明：批准后根据任务类型
    `agentToAgent` 转交给最合适的部门（commerce/treasury/defense/...）。
 
@@ -146,7 +146,7 @@ scotus           → anthropic/claude-sonnet-4-6   （严谨）
 doge_musk        → deepseek/deepseek-chat        （高频、便宜）
 congress_*       → qwen/qwen-plus
 内阁 6 部门       → deepseek/deepseek-chat (defaults)
-intake           → deepseek/deepseek-chat
+chief_of_staff           → deepseek/deepseek-chat
 ```
 
 ---
@@ -174,7 +174,7 @@ intake           → deepseek/deepseek-chat
     defaults: { model: "deepseek/deepseek-chat",
                 workspaceRoot: "D:/Vibe_Coding/trumptopia-ai/openclaw-pack/agents" },
     list: [
-      { id: "intake",          name: "太子",   workspace: ".../agents/intake" },
+      { id: "chief_of_staff",          name: "白宫办公厅主任",   workspace: ".../agents/chief_of_staff" },
       { id: "trump_president", name: "总统",   workspace: ".../agents/trump_president",
         model: "anthropic/claude-sonnet-4-6" },
       { id: "congress_senate", name: "参议院", workspace: ".../agents/congress_senate",
@@ -184,9 +184,9 @@ intake           → deepseek/deepseek-chat
     ]
   },
   bindings: [
-    // 用户消息默认进 intake；@ 具体角色则直达
-    { agentId: "intake",          match: { channel: "feishu",  accountId: "*" } },
-    { agentId: "intake",          match: { channel: "discord", accountId: "*" } }
+    // 用户消息默认进 chief_of_staff；@ 具体角色则直达
+    { agentId: "chief_of_staff",          match: { channel: "feishu",  accountId: "*" } },
+    { agentId: "chief_of_staff",          match: { channel: "discord", accountId: "*" } }
   ],
   mcpServers: {                       // 可选，找回真实 DOGE 数据
     doge: { command: "python", args: [".../openclaw-pack/tools/doge_mcp.py"] }
@@ -205,7 +205,7 @@ intake           → deepseek/deepseek-chat
 set -e
 command -v openclaw >/dev/null || { echo "请先安装 OpenClaw"; exit 1; }
 ROOT="$(pwd)/openclaw-pack/agents"
-for id in intake trump_president congress_senate congress_house scotus doge_musk \
+for id in chief_of_staff trump_president congress_senate congress_house scotus doge_musk \
           state_dept treasury defense commerce energy justice; do
   openclaw agents add "$id" --workspace "$ROOT/$id" \
     --description "MAGAgents: $id" || true     # 安全：已存在则跳过
@@ -219,15 +219,15 @@ echo "请按 INSTALL.md 配置每角色模型、频道凭据，再 openclaw gate
 3. `bash openclaw-pack/install.sh` 注册 12 个 agent
 4. 把 `openclaw.json` 的 `agents.list` 模型 / `bindings` / `mcpServers` 合并进主配置
 5. 配飞书/Discord 频道凭据
-6. `openclaw gateway start` → 群里 @太子 下令
+6. `openclaw gateway start` → 群里 @白宫办公厅主任 下令
 
 ---
 
 ## 8. 端到端交互
 
 ```
-[飞书群] @太子 写一篇公众号推文宣传 MAGAgents，面向开发者
-[intake]  → agentToAgent(congress_senate, 任务)
+[飞书群] @白宫办公厅主任 写一篇公众号推文宣传 MAGAgents，面向开发者
+[chief_of_staff]  → agentToAgent(congress_senate, 任务)
 [参议院]  放行 → agentToAgent(trump_president, 任务+结论)
 [总统]    批准并派 commerce → agentToAgent(commerce, 任务)
 [商务部]  产出推文 → agentToAgent(doge_musk, 交付物)   （可选调 doge MCP 审计）
@@ -243,7 +243,7 @@ echo "请按 INSTALL.md 配置每角色模型、频道凭据，再 openclaw gate
 |---|---|---|
 | P1 | 精简重写 12 份 SOUL.md（含协作/路由约定）+ IDENTITY/TOOLS | 文件齐全，单 agent 在 OpenClaw 能应答 |
 | P2 | `openclaw.json` + `install.sh` + 每角色模型 | `openclaw agents list` 显示 12 个 |
-| P3 | 接一个频道（Discord 最快）跑通 intake→…→总统回复 | 群里 @ 能走完整链 |
+| P3 | 接一个频道（Discord 最快）跑通 chief_of_staff→…→总统回复 | 群里 @ 能走完整链 |
 | P4 | （可选）`tools/doge_mcp.py` 找回真实审计/解雇 | DOGE 报告有真实数字 |
 | P5 | `INSTALL.md` 文档 + 把现有 Python 代码移入 `legacy/` | 端到端 demo |
 

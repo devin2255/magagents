@@ -11,7 +11,7 @@ command -v openclaw >/dev/null 2>&1 || {
 
 # id|model（留空走 defaults）
 AGENTS=(
-  "intake|"
+  "chief_of_staff|"
   "trump_president|anthropic/claude-sonnet-4-6"
   "scotus|anthropic/claude-sonnet-4-6"
   "congress_senate|qwen/qwen-plus"
@@ -37,5 +37,5 @@ echo
 echo "✅ 12 个 agent 注册完成。下一步："
 echo "  1) 把 openclaw-pack/openclaw.json 的 bindings / mcpServers 合并进你的主配置"
 echo "  2) 配置飞书/Discord 频道凭据"
-echo "  3) openclaw gateway start  → 群里 @太子总机 下命令"
+echo "  3) openclaw gateway start  → 群里 @白宫办公厅主任 下命令"
 echo "  详见 openclaw-pack/INSTALL.md"

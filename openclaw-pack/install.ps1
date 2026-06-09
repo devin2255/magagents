@@ -11,7 +11,7 @@ if (-not (Get-Command openclaw -ErrorAction SilentlyContinue)) {
 }
 
 $agents = @(
-    @{ id = "intake";          model = "" },
+    @{ id = "chief_of_staff";          model = "" },
     @{ id = "trump_president"; model = "anthropic/claude-sonnet-4-6" },
     @{ id = "scotus";          model = "anthropic/claude-sonnet-4-6" },
     @{ id = "congress_senate"; model = "qwen/qwen-plus" },

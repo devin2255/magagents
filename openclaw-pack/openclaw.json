@@ -7,7 +7,7 @@
       "workspaceRoot": "./openclaw-pack/agents"
     },
     "list": [
-      { "id": "intake",          "name": "太子总机",  "workspace": "./openclaw-pack/agents/intake" },
+      { "id": "chief_of_staff",          "name": "白宫办公厅主任",  "workspace": "./openclaw-pack/agents/chief_of_staff" },
       { "id": "trump_president", "name": "总统",      "workspace": "./openclaw-pack/agents/trump_president", "model": "anthropic/claude-sonnet-4-6", "temperature": 1.0 },
       { "id": "scotus",          "name": "最高法院",  "workspace": "./openclaw-pack/agents/scotus",          "model": "anthropic/claude-sonnet-4-6", "temperature": 0.3 },
       { "id": "congress_senate", "name": "参议院",    "workspace": "./openclaw-pack/agents/congress_senate", "model": "qwen/qwen-plus" },
@@ -22,9 +22,9 @@
     ]
   },
   "bindings": [
-    { "agentId": "intake", "match": { "channel": "feishu",   "accountId": "*" } },
-    { "agentId": "intake", "match": { "channel": "discord",  "accountId": "*" } },
-    { "agentId": "intake", "match": { "channel": "telegram", "accountId": "*" } }
+    { "agentId": "chief_of_staff", "match": { "channel": "feishu",   "accountId": "*" } },
+    { "agentId": "chief_of_staff", "match": { "channel": "discord",  "accountId": "*" } },
+    { "agentId": "chief_of_staff", "match": { "channel": "telegram", "accountId": "*" } }
   ],
   "mcpServers": {
     "doge": {
