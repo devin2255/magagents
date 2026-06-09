@@ -60,14 +60,26 @@ def print_step(step):
         print(f"     {C.DIM}{reason}{C.R}")
 
 
-def run_one(orch, text):
+def run_one(orch, text, session=None):
     enabled = orch.llm_enabled
     print(f"\n{C.DIM}📋 任务：{text}{C.R}")
     if not enabled:
         print(f"{C.YELLOW}⚠️  当前离线模式（未配 API key），将自动放行并输出占位结果。{C.R}")
+
+    # 多轮上下文：把上一版交付物带上，让内阁迭代而非从零开始
+    description = ""
+    if session and session.get("last_output"):
+        print(f"{C.DIM}🔗 已带上上一轮上下文（迭代模式，输入 /new 可重新开始）{C.R}")
+        description = (
+            f"【这是一次多轮对话的延续】\n"
+            f"上一个任务：{session.get('last_title', '')}\n"
+            f"上一版交付物：\n{session['last_output']}\n\n"
+            f"用户本轮的补充/修改要求：{text}\n"
+            f"请基于以上上下文，产出更新后的【完整】交付物，而不是从头重来。"
+        )
     print(f"{C.DIM}🏛️  政府流程运行中…{C.R}\n")
 
-    task = orch.create_task(title=text, description="", priority="high")
+    task = orch.create_task(title=text, description=description, priority="high")
     before = dict(orch.llm_usage)
     result = orch.run_task_agentic(task.id, on_step=print_step)
 
@@ -79,6 +91,10 @@ def run_one(orch, text):
         print(f"\n{C.GREEN}{C.B}📄 交付物：{C.R}")
         for line in t.output.splitlines():
             print(f"  {line}")
+        # 记住本轮交付物，供下一轮迭代
+        if session is not None and result.get("outcome") == "done":
+            session["last_title"] = text
+            session["last_output"] = t.output
 
     di = orch.llm_usage["input_tokens"] - before["input_tokens"]
     do = orch.llm_usage["output_tokens"] - before["output_tokens"]
@@ -111,10 +127,11 @@ def cmd_feed(orch):
 HELP = f"""{C.B}MAGAgents 对话模式{C.R}
   直接输入任务（任意语言，回复跟随你的语言），例如：
     写一条庆祝贸易协议的推文
+  多轮：直接追加要求即可迭代上一版交付物；{C.CYAN}/new{C.R} 开始新会话。
   命令：
     {C.CYAN}/tasks{C.R}  最近任务      {C.CYAN}/doge{C.R}   DOGE 审计数据
-    {C.CYAN}/feed{C.R}   Truth Social  {C.CYAN}/help{C.R}   帮助
-    {C.CYAN}/quit{C.R}   退出"""
+    {C.CYAN}/feed{C.R}   Truth Social  {C.CYAN}/new{C.R}    清空上下文
+    {C.CYAN}/help{C.R}   帮助          {C.CYAN}/quit{C.R}   退出"""
 
 
 def main():
@@ -128,6 +145,7 @@ def main():
 
     print(f"\n{C.GOLD}{C.B}🏛️  MAGAgents · AI 政府对话终端{C.R}   [AI 模式：{mode}]")
     print(HELP)
+    session = {"last_title": None, "last_output": None}
     while True:
         try:
             text = input(f"\n{C.B}你 ▸ {C.R}").strip()
@@ -139,6 +157,9 @@ def main():
             print(f"{C.DIM}再见！#MAGA{C.R}"); break
         elif text in ("/help", "/h"):
             print(HELP)
+        elif text in ("/new", "/reset"):
+            session = {"last_title": None, "last_output": None}
+            print(f"{C.DIM}🆕 已开始新会话（清空上下文）。{C.R}")
         elif text == "/tasks":
             cmd_tasks(orch)
         elif text == "/doge":
@@ -148,7 +169,7 @@ def main():
         elif text.startswith("/"):
             print(f"{C.DIM}未知命令，输入 /help 查看。{C.R}")
         else:
-            run_one(orch, text)
+            run_one(orch, text, session)
 
 
 if __name__ == "__main__":

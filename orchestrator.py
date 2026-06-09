@@ -432,7 +432,13 @@ class MAGAgentsOrchestrator:
         self.transition_state(task_id, AgentState.CONGRESS)
         vote = self._agent_decide(
             task, "congress_senate",
-            instruction=f"As the U.S. Senate, debate whether this task should proceed.\n{ctx}",
+            instruction="You are the U.S. Senate acting as a SAFETY gatekeeper, not a "
+                        "bureaucrat. Vote 'pass' for any reasonable, lawful, harmless task "
+                        "— including writing, content creation, analysis, coding, planning. "
+                        "Vote 'reject' ONLY if the task is clearly illegal, harmful, or "
+                        "completely nonsensical. Missing details are NOT grounds for "
+                        "rejection — the Cabinet will fill in specifics or ask. Default "
+                        f"strongly to 'pass'.\n{ctx}",
             schema_hint='{"vote": "pass" | "reject", "reason": "<one sentence>"}',
             fallback={"vote": "pass", "reason": "Auto-approved (offline mode)."},
         )
@@ -443,8 +449,11 @@ class MAGAgentsOrchestrator:
             self.transition_state(task_id, AgentState.SCOTUS, vote.get("reason", ""))
             ruling = self._agent_decide(
                 task, "scotus",
-                instruction=f"Congress rejected this task: '{vote.get('reason')}'. "
-                            f"Rule whether it may still proceed to the President.\n{ctx}",
+                instruction=f"Congress rejected this task: '{vote.get('reason')}'. As the "
+                            "Supreme Court, rule 'proceed' UNLESS the task is genuinely "
+                            "illegal or harmful. Bureaucratic concerns (lack of detail, "
+                            "cost, coordination) are NOT valid grounds to block — in those "
+                            f"cases rule 'proceed'.\n{ctx}",
                 schema_hint='{"ruling": "proceed" | "block", "reason": "<one sentence>"}',
                 fallback={"ruling": "proceed", "reason": "No constitutional issue (offline)."},
             )
@@ -468,9 +477,9 @@ class MAGAgentsOrchestrator:
         cabinet = [a for a, s in self.AGENT_STATES.items() if s == AgentState.CABINET]
         potus = self._agent_decide(
             task, "trump_president",
-            instruction=f"As President, decide whether to APPROVE or VETO this task, and "
-                        f"which Cabinet department should execute it. Choose assignee from: "
-                        f"{', '.join(cabinet)}.\n{ctx}",
+            instruction=f"As President, APPROVE this task and assign the best Cabinet "
+                        f"department to execute it (choose from: {', '.join(cabinet)}). "
+                        f"Only VETO if the task is harmful or illegal. Default to approve.\n{ctx}",
             schema_hint='{"decision": "approve" | "veto", '
                         '"assignee": "<cabinet agent id>", "reason": "<one sentence>"}',
             fallback={"decision": "approve", "assignee": "commerce",
@@ -497,8 +506,11 @@ class MAGAgentsOrchestrator:
         self.transition_state(task_id, AgentState.DOING, f"Assigned to {assignee}")
         output = self._agent_produce(
             task, assignee,
-            instruction=f"You are the '{assignee}' department. Carry out this task and "
-                        f"return your concrete deliverable / result.\n{ctx}",
+            instruction=f"You are the '{assignee}' department. Produce the FINISHED "
+                        f"deliverable for this task directly and completely. Do NOT ask the "
+                        f"user questions and do NOT return a plan — if something is "
+                        f"unspecified, make reasonable assumptions and deliver the actual "
+                        f"result (the full text/content/code requested).\n{ctx}",
             fallback=f"[offline] {assignee} completed: {task.title}",
         )
         task.output = output
