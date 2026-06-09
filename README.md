@@ -286,6 +286,9 @@ runs genuine multi-agent decisions. See it live at the end of `python demo.py`.
   (`run_task_agentic(id, max_cost=0.02)`); env: `MAGAGENTS_MAX_COST_PER_TASK`.
 - **Dashboard**: open a task in the Oval Office Dashboard to see its full decision
   trace + deliverable, or hit **▶️ Run (Agentic)** to drive it live.
+- **Chat CLI**: `python chat.py` — talk to the government; each agent's decision
+  streams live, the deliverable prints at the end, in your input language.
+  One-shot: `python chat.py "Write a tweet about the trade deal"`.
 
 > 🔒 API keys are read from environment variables only and never committed (`.env` is gitignored).
 

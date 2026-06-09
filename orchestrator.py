@@ -394,7 +394,7 @@ class MAGAgentsOrchestrator:
         return {"task_id": task.id, "outcome": "over_budget", "reason": reason, "trace": trace}
 
     def run_task_agentic(self, task_id: str, max_cost: float = None,
-                         max_tokens: int = None) -> dict:
+                         max_tokens: int = None, on_step=None) -> dict:
         """Drive a task through the full government with REAL agent decisions.
 
         Congress votes -> POTUS approves/vetoes & assigns -> Cabinet executes
@@ -403,6 +403,9 @@ class MAGAgentsOrchestrator:
 
         A cost circuit-breaker (max_cost / max_tokens, defaulting to config budget)
         lets DOGE halt the task before the next LLM step if it overspends.
+
+        `on_step(step_dict)` is called live after each decision (for streaming UIs
+        like the chat CLI).
         """
         task = self.tasks.get(task_id)
         if not task:
@@ -417,6 +420,14 @@ class MAGAgentsOrchestrator:
         ctx = f"Task: {task.title}\nDescription: {task.description}\nPriority: {task.priority}{lang}"
         trace = []
 
+        def emit(step):
+            trace.append(step)
+            if on_step:
+                try:
+                    on_step(step)
+                except Exception:
+                    pass
+
         # 1) Congress review --------------------------------------------------
         self.transition_state(task_id, AgentState.CONGRESS)
         vote = self._agent_decide(
@@ -425,7 +436,7 @@ class MAGAgentsOrchestrator:
             schema_hint='{"vote": "pass" | "reject", "reason": "<one sentence>"}',
             fallback={"vote": "pass", "reason": "Auto-approved (offline mode)."},
         )
-        trace.append({"stage": "congress", "agent": "congress_senate", **vote})
+        emit({"stage": "congress", "agent": "congress_senate", **vote})
 
         if str(vote.get("vote")).lower() == "reject":
             # Dispute goes to the Supreme Court for arbitration.
@@ -437,7 +448,7 @@ class MAGAgentsOrchestrator:
                 schema_hint='{"ruling": "proceed" | "block", "reason": "<one sentence>"}',
                 fallback={"ruling": "proceed", "reason": "No constitutional issue (offline)."},
             )
-            trace.append({"stage": "scotus", "agent": "scotus", **ruling})
+            emit({"stage": "scotus", "agent": "scotus", **ruling})
             if str(ruling.get("ruling")).lower() == "block":
                 task.block = ruling.get("reason", "Blocked by SCOTUS")
                 task.outcome = "blocked"
@@ -465,7 +476,7 @@ class MAGAgentsOrchestrator:
             fallback={"decision": "approve", "assignee": "commerce",
                       "reason": "TREMENDOUS idea (offline)."},
         )
-        trace.append({"stage": "potus", "agent": "trump_president", **potus})
+        emit({"stage": "potus", "agent": "trump_president", **potus})
 
         if str(potus.get("decision")).lower() == "veto":
             self.veto_task(task_id, potus.get("reason", "Vetoed by POTUS"))
@@ -493,7 +504,7 @@ class MAGAgentsOrchestrator:
         task.output = output
         task.add_progress_log(assignee, output[:500], tokens=task.tokens_used, cost=task.cost)
         self.save_tasks()
-        trace.append({"stage": "cabinet", "agent": assignee, "output_preview": output[:200]})
+        emit({"stage": "cabinet", "agent": assignee, "output_preview": output[:200]})
 
         over = self._over_budget(task, max_cost, max_tokens)
         if over:
@@ -510,7 +521,7 @@ class MAGAgentsOrchestrator:
             fallback={"verdict": "pass" if efficiency >= 30 else "fire",
                       "reason": f"Efficiency {efficiency:.0f}% (offline rule)."},
         )
-        trace.append({"stage": "doge", "agent": "doge_musk", "efficiency": efficiency, **audit})
+        emit({"stage": "doge", "agent": "doge_musk", "efficiency": efficiency, **audit})
 
         if str(audit.get("verdict")).lower() == "fire" or efficiency < 30:
             self.transition_state(task_id, AgentState.DOGE_AUDIT, "DOGE flagged inefficiency")

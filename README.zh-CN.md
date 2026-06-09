@@ -288,6 +288,9 @@ print(result["outcome"], result.get("output"))
   环境变量 `MAGAGENTS_MAX_COST_PER_TASK`。
 - **看板联动**：在 Oval Office 看板点开任务即可看到完整决策链 + 交付物，
   或点 **▶️ Run (Agentic)** 直接在网页上跑整条流程。
+- **对话式 CLI**：`python chat.py` —— 像聊天一样给政府派活，每个角色的决策
+  实时逐步显示，最后打印交付物，且回复语言跟随你的输入。
+  单次模式：`python chat.py "写一条庆祝贸易协议的推文"`。
 
 > 🔒 API Key 只从环境变量读取，绝不提交（`.env` 已加入 .gitignore）。
 
