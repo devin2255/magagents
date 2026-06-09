@@ -1,0 +1,36 @@
+{
+  "$comment": "MAGAgents · OpenClaw native pack. Merge these keys into your main ~/.openclaw/openclaw.json. Key names (workspaceRoot/bindings/mcpServers) follow current OpenClaw docs — verify against your installed version.",
+  "agents": {
+    "defaults": {
+      "model": "deepseek/deepseek-chat",
+      "temperature": 0.8,
+      "workspaceRoot": "./openclaw-pack/agents"
+    },
+    "list": [
+      { "id": "intake",          "name": "太子总机",  "workspace": "./openclaw-pack/agents/intake" },
+      { "id": "trump_president", "name": "总统",      "workspace": "./openclaw-pack/agents/trump_president", "model": "anthropic/claude-sonnet-4-6", "temperature": 1.0 },
+      { "id": "scotus",          "name": "最高法院",  "workspace": "./openclaw-pack/agents/scotus",          "model": "anthropic/claude-sonnet-4-6", "temperature": 0.3 },
+      { "id": "congress_senate", "name": "参议院",    "workspace": "./openclaw-pack/agents/congress_senate", "model": "qwen/qwen-plus" },
+      { "id": "congress_house",  "name": "众议院",    "workspace": "./openclaw-pack/agents/congress_house",  "model": "qwen/qwen-flash" },
+      { "id": "doge_musk",       "name": "DOGE",      "workspace": "./openclaw-pack/agents/doge_musk",       "model": "deepseek/deepseek-chat", "temperature": 0.5 },
+      { "id": "state_dept",      "name": "国务院",    "workspace": "./openclaw-pack/agents/state_dept" },
+      { "id": "treasury",        "name": "财政部",    "workspace": "./openclaw-pack/agents/treasury" },
+      { "id": "defense",         "name": "国防部",    "workspace": "./openclaw-pack/agents/defense" },
+      { "id": "commerce",        "name": "商务部",    "workspace": "./openclaw-pack/agents/commerce" },
+      { "id": "energy",          "name": "能源部",    "workspace": "./openclaw-pack/agents/energy" },
+      { "id": "justice",         "name": "司法部",    "workspace": "./openclaw-pack/agents/justice" }
+    ]
+  },
+  "bindings": [
+    { "agentId": "intake", "match": { "channel": "feishu",   "accountId": "*" } },
+    { "agentId": "intake", "match": { "channel": "discord",  "accountId": "*" } },
+    { "agentId": "intake", "match": { "channel": "telegram", "accountId": "*" } }
+  ],
+  "mcpServers": {
+    "doge": {
+      "command": "python",
+      "args": ["./openclaw-pack/tools/doge_mcp.py"],
+      "env": { "PYTHONUNBUFFERED": "1" }
+    }
+  }
+}

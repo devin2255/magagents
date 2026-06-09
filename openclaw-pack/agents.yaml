@@ -1,0 +1,58 @@
+# MAGAgents · OpenClaw 一键安装清单 (one-command manifest)
+# 仿 openclaw-agents 格式。install.sh 读取本文件批量注册 agent。
+# 模型留空则用 defaults (deepseek/deepseek-chat)。
+
+defaults:
+  model: deepseek/deepseek-chat
+  temperature: 0.8
+
+agents:
+  - id: intake
+    name: 太子总机
+    role: 协调者 / 接收用户消息并驱动宪法流程
+  - id: trump_president
+    name: 总统
+    role: 行政最终决策 / 批准否决 / 指派内阁
+    model: anthropic/claude-sonnet-4-6
+    temperature: 1.0
+  - id: scotus
+    name: 最高法院
+    role: 司法仲裁
+    model: anthropic/claude-sonnet-4-6
+    temperature: 0.3
+  - id: congress_senate
+    name: 参议院
+    role: 立法审议 (安全守门人)
+    model: qwen/qwen-plus
+  - id: congress_house
+    name: 众议院
+    role: 预算审查
+    model: qwen/qwen-flash
+  - id: doge_musk
+    name: DOGE
+    role: 效率审计 / 解雇建议
+    temperature: 0.5
+  - id: state_dept
+    name: 国务院
+    role: 外交 / 对外接口
+  - id: treasury
+    name: 财政部
+    role: 预算 / 成本分析
+  - id: defense
+    name: 国防部
+    role: 安全 / 攻防
+  - id: commerce
+    name: 商务部
+    role: 数据分析 / 内容 / 市场
+  - id: energy
+    name: 能源部
+    role: 算力调度 / 资源优化
+  - id: justice
+    name: 司法部
+    role: 合规 / 法律审查
+
+# 频道绑定：默认所有入站消息进 intake
+bindings:
+  - { agent: intake, channel: feishu }
+  - { agent: intake, channel: discord }
+  - { agent: intake, channel: telegram }
