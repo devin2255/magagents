@@ -11,3 +11,6 @@ __pycache__/
 data/*.json
 data/certificates/
 !data/.gitkeep
+
+# Local Claude Code config (launch.json etc.)
+.claude/
