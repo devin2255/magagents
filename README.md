@@ -76,8 +76,10 @@ User task
    │                              └ veto → ⚖️ Congress override vote (2/3, both chambers)
    │                                         ├ overridden → enacted anyway → step 4
    │                                         └ sustained  → ❌ VETOED (end)
-   ▼  EXECUTIVE — implementation
-4) 💼 Cabinet department (assigned by the President) ── produces the deliverable
+   ▼  EXECUTIVE — implementation (adaptive interagency)
+4) 💼 President names a LEAD department + optional COLLABORATORS
+   │   simple task → lead alone produces it
+   │   complex task → each collaborator contributes its part → lead synthesizes
    │
    ▼  JUDICIAL — judicial review
 5) ⚖️ Supreme Court (scotus) ─ uphold → step 6
@@ -95,7 +97,13 @@ User task
   unconstitutional (judiciary checks both branches).
 - **Oversight** — DOGE audits execution on real token usage.
 
-**Who does the work? The President assigns one Cabinet department by task type:**
+**Execution is adaptive interagency collaboration** (within the executive branch,
+separate from the checks between branches): the President picks a **lead**
+department and, for complex tasks, up to 3 **collaborating** departments — each
+contributes its specialty and the lead synthesizes the final deliverable. Simple
+tasks use the lead alone, so they stay cheap.
+
+**Who does the work? The President assigns Cabinet departments by task type:**
 
 | Department | Best for |
 |---|---|

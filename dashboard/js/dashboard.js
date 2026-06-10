@@ -4,12 +4,13 @@ const PRIORITY_CN = { critical: '紧急', high: '高', normal: '普通', low: '�
 const STAGE_CN = {
     house: '众议院', senate: '参议院', congress: '国会', potus: '总统',
     override_house: '众议院反否决', override_senate: '参议院反否决', override: '推翻否决',
-    cabinet: '内阁', scotus: '最高法院(违宪审查)', doge: 'DOGE'
+    cabinet_plan: '内阁分工', contribution: '协作部门出件', cabinet: '内阁汇总交付',
+    scotus: '最高法院(违宪审查)', doge: 'DOGE'
 };
 const STAGE_ICON = {
     house: '🏛️', senate: '🏛️', congress: '🏛️', potus: '🎩',
     override_house: '🔁', override_senate: '🔁', override: '⚖️',
-    cabinet: '🏢', scotus: '⚖️', doge: '🐕'
+    cabinet_plan: '🗂️', contribution: '🧩', cabinet: '🏢', scotus: '⚖️', doge: '🐕'
 };
 const OUTCOME_CN = {
     done: '已完成', fired: '已解雇', vetoed: '已否决', congress_failed: '国会未通过',
@@ -251,7 +252,8 @@ class MAGAgentsDashboard {
         let traceHtml = '';
         if (trace.length) {
             const rows = trace.map(s => {
-                const verdict = s.vote || s.decision || s.ruling || s.verdict || s.result || (s.output_preview ? '已执行' : '');
+                const plan = s.lead ? ('牵头 ' + s.lead + (s.collaborators && s.collaborators.length ? ' ＋协作 ' + s.collaborators.join(', ') : ' (单部门)')) : '';
+                const verdict = s.vote || s.decision || s.ruling || s.verdict || s.result || plan || (s.output_preview ? '已执行' : '');
                 const detail = s.reason || s.output_preview || '';
                 const eff = (s.efficiency != null) ? ` · 效率 ${Number(s.efficiency).toFixed(0)}%` : '';
                 return `<div class="trace-step">

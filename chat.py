@@ -39,7 +39,9 @@ STAGE = {
     "override_house":  ("🔁", "众议院反否决 / House override", C.MAGENTA),
     "override_senate": ("🔁", "参议院反否决 / Senate override", C.MAGENTA),
     "override":        ("⚖️", "国会推翻否决 / Veto overridden", C.GREEN),
-    "cabinet":         ("🏢", "内阁 / Cabinet", C.BLUE),
+    "cabinet_plan":    ("🗂️", "内阁分工 / Interagency plan", C.BLUE),
+    "contribution":    ("🧩", "协作部门出件 / Contribution", C.BLUE),
+    "cabinet":         ("🏢", "内阁汇总交付 / Cabinet deliver", C.BLUE),
     "scotus":          ("⚖️", "最高法院违宪审查 / Judicial review", C.MAGENTA),
     "doge":            ("🐕", "DOGE 审计", C.YELLOW),
 }
@@ -57,6 +59,13 @@ OUTCOME = {
 def print_step(step):
     """run_task_agentic 的逐步回调：实时打印每个角色的决策。"""
     icon, label, color = STAGE.get(step.get("stage"), ("•", step.get("stage", "?"), C.R))
+    # 内阁分工：展示牵头 + 协作部门
+    if step.get("stage") == "cabinet_plan":
+        lead = step.get("lead", "?")
+        collab = step.get("collaborators") or []
+        extra = f"（协作：{', '.join(collab)}）" if collab else "（单部门）"
+        print(f"  {icon} {color}{C.B}{label}{C.R} 牵头 {C.B}{lead}{C.R} {C.DIM}{extra}{C.R}")
+        return
     verdict = (step.get("vote") or step.get("decision") or step.get("ruling")
                or step.get("verdict") or step.get("result")
                or ("已执行" if step.get("output_preview") else ""))

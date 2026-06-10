@@ -481,12 +481,16 @@ class MAGAgentsOrchestrator:
         potus = self._agent_decide(
             task, "trump_president",
             instruction=f"Congress passed this bill. As President, SIGN it (approve) and "
-                        f"assign the best Cabinet department to execute it (choose from: "
-                        f"{', '.join(cabinet)}). Only VETO if the task is harmful or "
-                        f"illegal. Default to sign.\n{ctx}",
-            schema_hint='{"decision": "sign" | "veto", '
-                        '"assignee": "<cabinet agent id>", "reason": "<one sentence>"}',
-            fallback={"decision": "sign", "assignee": "commerce",
+                        f"staff the execution: choose a LEAD Cabinet department, plus any "
+                        f"COLLABORATING departments the task genuinely needs (interagency). "
+                        f"Pick from: {', '.join(cabinet)}. For a simple task use just the "
+                        f"lead and leave collaborators empty; only add collaborators when "
+                        f"multiple specialties are truly required (max 3). Only VETO if the "
+                        f"task is harmful or illegal. Default to sign.\n{ctx}",
+            schema_hint='{"decision": "sign" | "veto", "lead": "<cabinet agent id>", '
+                        '"collaborators": ["<cabinet agent id>", ...], '
+                        '"reason": "<one sentence>"}',
+            fallback={"decision": "sign", "lead": "commerce", "collaborators": [],
                       "reason": "TREMENDOUS idea (offline)."},
         )
         emit({"stage": "potus", "agent": "trump_president", **potus})
@@ -526,30 +530,65 @@ class MAGAgentsOrchestrator:
                 self.veto_task(task_id, vreason or "Vetoed by POTUS")
                 return terminate(AgentState.VETOED, "vetoed")
 
-        assignee = potus.get("assignee") if potus.get("assignee") in cabinet else "commerce"
+        # Lead + collaborating departments (adaptive interagency execution).
+        lead = potus.get("lead") if potus.get("lead") in cabinet else \
+            (potus.get("assignee") if potus.get("assignee") in cabinet else "commerce")
+        collaborators = [c for c in (potus.get("collaborators") or [])
+                         if c in cabinet and c != lead][:3]
+        assignee = lead  # backward-compat field
+
         self.transition_state(task_id, AgentState.CABINET,
                               "Enacted (veto overridden)" if overridden else "Signed into law")
-        self.assign_to_agent(task_id, assignee)
+        self.assign_to_agent(task_id, lead)
+        emit({"stage": "cabinet_plan", "agent": lead, "lead": lead,
+              "collaborators": collaborators})
 
         over = self._over_budget(task, max_cost, max_tokens)
         if over:
             return self._halt_over_budget(task, trace, over)
 
-        # ===== EXECUTIVE — Cabinet department executes (real work) =====
-        self.transition_state(task_id, AgentState.DOING, f"Assigned to {assignee}")
+        # ===== EXECUTIVE — Cabinet executes (interagency: collaborators + lead) =====
+        self.transition_state(task_id, AgentState.DOING, f"Lead: {lead}")
+
+        contributions = {}
+        for dept in collaborators:
+            over = self._over_budget(task, max_cost, max_tokens)
+            if over:
+                return self._halt_over_budget(task, trace, over)
+            part = self._agent_produce(
+                task, dept,
+                instruction=f"You are the '{dept}' department, contributing YOUR part to a "
+                            f"task led by '{lead}'. Produce ONLY your department's piece "
+                            f"(your specialty), concrete and ready to integrate — no plan, "
+                            f"no questions.\n{ctx}",
+                fallback=f"[offline] {dept} contribution for: {task.title}",
+            )
+            contributions[dept] = part
+            emit({"stage": "contribution", "agent": dept, "output_preview": part[:200]})
+
+        if contributions:
+            joined = "\n\n".join(f"【{d}】\n{p}" for d, p in contributions.items())
+            lead_instruction = (
+                f"You are the '{lead}' department, the LEAD. Integrate the collaborating "
+                f"departments' contributions below into ONE finished, coherent deliverable "
+                f"for the task. Deliver the actual final result — no plan, no questions.\n"
+                f"{ctx}\n\nContributions:\n{joined}")
+        else:
+            lead_instruction = (
+                f"You are the '{lead}' department. Produce the FINISHED deliverable for this "
+                f"task directly and completely. Do NOT ask the user questions and do NOT "
+                f"return a plan — make reasonable assumptions and deliver the actual result "
+                f"(the full text/content/code requested).\n{ctx}")
+
         output = self._agent_produce(
-            task, assignee,
-            instruction=f"You are the '{assignee}' department. Produce the FINISHED "
-                        f"deliverable for this task directly and completely. Do NOT ask the "
-                        f"user questions and do NOT return a plan — if something is "
-                        f"unspecified, make reasonable assumptions and deliver the actual "
-                        f"result (the full text/content/code requested).\n{ctx}",
-            fallback=f"[offline] {assignee} completed: {task.title}",
+            task, lead, instruction=lead_instruction,
+            fallback=f"[offline] {lead} completed: {task.title}",
         )
         task.output = output
-        task.add_progress_log(assignee, output[:500], tokens=task.tokens_used, cost=task.cost)
+        task.add_progress_log(lead, output[:500], tokens=task.tokens_used, cost=task.cost)
         self.save_tasks()
-        emit({"stage": "cabinet", "agent": assignee, "output_preview": output[:200]})
+        emit({"stage": "cabinet", "agent": lead, "collaborators": collaborators,
+              "output_preview": output[:200]})
 
         over = self._over_budget(task, max_cost, max_tokens)
         if over:
